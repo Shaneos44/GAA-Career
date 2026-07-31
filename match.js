@@ -1,212 +1,181 @@
-// GAA Career — Match Day engine. Renders a full-screen sequence of
-// timing-based skill challenges (shooting, high-fielding, tackling),
-// then hands the resulting contribution to data.js to resolve the match.
+// GAA Career — Match Day. Builds a sequence of skill events weighted by the
+// player's position, runs them through minigames.js, then hands the combined
+// contribution to data.js to resolve the fixture and advance the season.
 
 (function () {
   const A = window.GaaAudio;
   const C = window.GaaConfetti;
+  const M = window.GaaMinigames;
 
-  function clamp(v, min, max) {
-    return Math.max(min, Math.min(max, v));
-  }
-  function randInt(min, max) {
-    return Math.floor(Math.random() * (max - min + 1)) + min;
-  }
-  function shuffle(arr) {
-    const a = [...arr];
-    for (let i = a.length - 1; i > 0; i--) {
-      const j = randInt(0, i);
-      [a[i], a[j]] = [a[j], a[i]];
-    }
-    return a;
-  }
+  function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+  function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
 
-  const RATING_LABELS = { perfect: "PERFECT!", great: "GREAT!", good: "OK", miss: "MISS!" };
-
-  function classify(dist, zoneWidthPct) {
-    const perfectHalf = zoneWidthPct * 0.35;
-    const greatHalf = zoneWidthPct;
-    const goodHalf = zoneWidthPct * 1.9;
-    if (dist <= perfectHalf) return { rating: "perfect", score: Math.round(100 - (dist / Math.max(perfectHalf, 0.001)) * 6) };
-    if (dist <= greatHalf) return { rating: "great", score: Math.round(90 - ((dist - perfectHalf) / (greatHalf - perfectHalf)) * 18) };
-    if (dist <= goodHalf) return { rating: "good", score: Math.round(64 - ((dist - greatHalf) / (goodHalf - greatHalf)) * 26) };
-    return { rating: "miss", score: Math.max(4, Math.round(28 - (dist - goodHalf))) };
-  }
-
-  /**
-   * Runs a single timing challenge inside the given card element.
-   * Resolves with { rating, score }.
-   */
-  function runTimingChallenge({ card, label, sub, zoneWidthPct, periodMs, timeoutMs = 3200 }) {
-    return new Promise((resolve) => {
-      const zoneCenterPct = 22 + Math.random() * 56;
-      const perfectHalf = zoneWidthPct * 0.35;
-      const greatHalf = zoneWidthPct;
-      const goodHalf = zoneWidthPct * 1.9;
-
-      const wrap = document.createElement("div");
-      wrap.className = "gf-challenge";
-      wrap.innerHTML = `
-        <div class="gf-challenge-label">${label}${sub ? `<span>${sub}</span>` : ""}</div>
-        <div class="gf-timing-track">
-          <div class="gf-zone good" style="left:${clamp(zoneCenterPct - goodHalf, 0, 100)}%;width:${goodHalf * 2}%"></div>
-          <div class="gf-zone great" style="left:${clamp(zoneCenterPct - greatHalf, 0, 100)}%;width:${greatHalf * 2}%"></div>
-          <div class="gf-zone perfect" style="left:${clamp(zoneCenterPct - perfectHalf, 0, 100)}%;width:${perfectHalf * 2}%"></div>
-          <div class="gf-timing-marker">⚽</div>
-        </div>
-        <button class="btn btn-primary gf-strike-btn">STRIKE!<span class="gf-key-hint">space</span></button>
-      `;
-      card.appendChild(wrap);
-
-      const marker = wrap.querySelector(".gf-timing-marker");
-      const strikeBtn = wrap.querySelector(".gf-strike-btn");
-      const start = performance.now();
-      let raf = null;
-      let done = false;
-
-      // Travel is inset to 3–97% so the marker never half-overflows the track.
-      function tick(now) {
-        const t = now - start;
-        const pos = 50 + 47 * Math.sin((2 * Math.PI * t) / periodMs);
-        marker.style.left = pos + "%";
-        if (!done) raf = requestAnimationFrame(tick);
-      }
-      raf = requestAnimationFrame(tick);
-
-      const timeout = setTimeout(() => finish(true), timeoutMs);
-
-      function finish(timedOut) {
-        if (done) return;
-        done = true;
-        clearTimeout(timeout);
-        cancelAnimationFrame(raf);
-        document.removeEventListener("keydown", onKey);
-        strikeBtn.disabled = true;
-
-        const pos = parseFloat(marker.style.left) || 50;
-        const dist = Math.abs(pos - zoneCenterPct);
-        const result = timedOut ? { rating: "miss", score: 8 } : classify(dist, zoneWidthPct);
-
-        marker.classList.add("locked", `r-${result.rating}`);
-        wrap.classList.add("resolved");
-        if (result.rating === "perfect") { A.perfect(); flashShake(card, "good"); }
-        else if (result.rating === "miss") { A.miss(); flashShake(card, "bad"); }
-        else A.tick();
-
-        const ratingTag = document.createElement("div");
-        ratingTag.className = `gf-rating-pop r-${result.rating}`;
-        ratingTag.textContent = RATING_LABELS[result.rating];
-        wrap.appendChild(ratingTag);
-
-        setTimeout(() => {
-          wrap.remove();
-          resolve(result);
-        }, 550);
-      }
-
-      function onKey(e) {
-        if (e.code === "Space") {
-          e.preventDefault();
-          finish(false);
-        }
-      }
-      document.addEventListener("keydown", onKey);
-      strikeBtn.addEventListener("click", () => finish(false));
-    });
-  }
-
-  function flashShake(card, kind) {
-    card.classList.remove("shake-good", "shake-bad");
-    void card.offsetWidth; // restart animation
-    card.classList.add(kind === "good" ? "shake-good" : "shake-bad");
-  }
-
-  function difficultyFor(state, attrKey, speedBase) {
-    const attrVal = state.attributes[attrKey];
-    const zoneWidthPct = clamp(7 + attrVal * 0.17, 7, 24);
-    let speed = speedBase * (1 + state.tierIndex * 0.09);
-    if (state.energy < 30) speed *= 1.2;
+  /** Attribute-driven difficulty: better players get a wider window, tougher tiers a faster one. */
+  function tuning(state, attrKey, speedBase) {
+    const attr = state.attributes[attrKey];
+    const zoneWidthPct = clamp(6.5 + attr * 0.17, 6.5, 24);
+    let speed = speedBase * (1 + state.tierIndex * 0.075);
+    if (state.energy < 30) speed *= 1.18;
     return { zoneWidthPct, periodMs: 1000 / speed };
   }
 
-  async function runShotEvent(card, state, momentTicker) {
-    const power = difficultyFor(state, "kicking", 0.8);
-    const powerResult = await runTimingChallenge({ card, label: "SHOT AT GOAL", sub: "POWER", ...power });
-    const place = difficultyFor(state, "freeTaking", 0.95);
-    const placeResult = await runTimingChallenge({ card, label: "SHOT AT GOAL", sub: "PLACEMENT", ...place });
-    const score = Math.round((powerResult.score + placeResult.score) / 2);
-    let text, log;
-    if (score >= 85) {
-      const goal = Math.random() < 0.35;
-      text = goal ? "GOAL!!! 🥅" : "PERFECT — POINT!";
-      log = goal ? "You buried it in the net — GOAL!" : "Clinical finish — over the bar for a point.";
-    } else if (score >= 60) {
-      text = "POINT!";
-      log = "Good strike, splits the posts for a point.";
-    } else if (score >= 35) {
-      text = "WIDE!";
-      log = "Dragged it wide — no score.";
-    } else {
-      text = "BLOCKED DOWN!";
-      log = "Charged down and turned over — dangerous.";
-    }
-    showMoment(card, text, score >= 60 ? "good" : "bad");
-    logMoment(momentTicker, log);
-    return { type: "shot", score };
-  }
+  // ---------- Event definitions ----------
 
-  async function runCatchEvent(card, state, momentTicker) {
-    const diff = difficultyFor(state, "fielding", 1.05);
-    const result = await runTimingChallenge({ card, label: "HIGH BALL IN — TIME YOUR JUMP", ...diff });
-    let text, log;
-    if (result.score >= 70) { text = "CLEAN CATCH!"; log = "Fielded it clean at full stretch — great possession won."; }
-    else if (result.score >= 40) { text = "SECURED"; log = "Scrappy, but you came away with it."; }
-    else { text = "SPILLED IT!"; log = "Dropped under the dropping ball — turned over."; }
-    showMoment(card, text, result.score >= 40 ? "good" : "bad");
-    logMoment(momentTicker, log);
-    return { type: "catch", score: result.score };
-  }
+  const EVENTS = {
+    async shot(card, state, ticker) {
+      const power = tuning(state, "kicking", 0.8);
+      const p1 = await M.timingBar({ card, label: "SHOT AT GOAL", sub: "POWER", ...power });
+      const place = tuning(state, "freeTaking", 0.95);
+      const p2 = await M.timingBar({ card, label: "SHOT AT GOAL", sub: "PLACEMENT", ...place });
+      const score = Math.round((p1.score + p2.score) / 2);
+      let text, log;
+      if (score >= 85) {
+        const goal = Math.random() < 0.4;
+        text = goal ? "GOAL!!!" : "SPLIT THE POSTS!";
+        log = goal ? "Buried it low to the corner — GOAL!" : "Clean strike, straight over the black spot.";
+      } else if (score >= 60) { text = "POINT!"; log = "Over the bar — point."; }
+      else if (score >= 35) { text = "WIDE!"; log = "Pulled it wide of the near post."; }
+      else { text = "BLOCKED!"; log = "Charged down — turned over in a dangerous spot."; }
+      flash(card, text, score >= 60);
+      tick(ticker, log);
+      return { type: "shot", score };
+    },
 
-  async function runTackleEvent(card, state, momentTicker) {
-    const diff = difficultyFor(state, "tackling", 1.25);
-    const result = await runTimingChallenge({ card, label: "TIME YOUR HIT", ...diff });
-    let text, log;
-    if (result.score >= 70) { text = "TURNOVER WON!"; log = "Textbook tackle — won the ball back clean."; }
-    else if (result.score >= 40) { text = "SLOWED THEM DOWN"; log = "Not pretty, but you got a hand in and slowed the attack."; }
-    else { text = "BEATEN!"; log = "Missed the tackle — big scoring chance for the opposition."; }
-    showMoment(card, text, result.score >= 40 ? "good" : "bad");
-    logMoment(momentTicker, log);
-    return { type: "tackle", score: result.score };
-  }
+    async free(card, state, ticker) {
+      const skill = state.attributes.freeTaking;
+      const r = await M.swipeKick({
+        card, label: "FREE KICK", sub: "AIM & POWER",
+        tolerance: { angle: clamp(10 + skill * 0.32, 10, 42), power: clamp(14 + skill * 0.36, 14, 50) },
+      });
+      let text, log;
+      if (r.score >= 80) { text = "SPLIT THE POSTS!"; log = "Dead-eye free — never in doubt."; }
+      else if (r.score >= 55) { text = "POINT!"; log = "Free converted."; }
+      else { text = "MISSED THE FREE"; log = "Dropped the free short and wide. Costly."; }
+      flash(card, text, r.score >= 55);
+      tick(ticker, log);
+      return { type: "free", score: r.score };
+    },
 
-  function showMoment(card, text, kind) {
+    async catch_(card, state, ticker) {
+      const skill = state.attributes.fielding;
+      const r = await M.holdAndRelease({
+        card, label: "HIGH BALL DROPPING IN", sub: "CHARGE YOUR LEAP, RELEASE AT THE APEX",
+        zoneWidthPct: clamp(9 + skill * 0.16, 9, 24),
+        fillMs: clamp(1500 - state.tierIndex * 60, 900, 1500),
+      });
+      let text, log;
+      if (r.score >= 70) { text = "CLEAN CATCH!"; log = "Rose above the lot of them and plucked it."; }
+      else if (r.score >= 40) { text = "BROKE IT DOWN"; log = "Couldn't hold it, but you broke it to a teammate."; }
+      else { text = "SPILLED IT!"; log = "Misjudged the flight — turned over under the dropping ball."; }
+      flash(card, text, r.score >= 40);
+      tick(ticker, log);
+      return { type: "catch", score: r.score };
+    },
+
+    async tackle(card, state, ticker) {
+      const t = tuning(state, "tackling", 1.3);
+      const r = await M.timingBar({ card, label: "TIME YOUR TACKLE", icon: "🛡️", ...t });
+      let text, log;
+      if (r.score >= 70) { text = "TURNOVER!"; log = "Textbook tackle — stripped him clean."; }
+      else if (r.score >= 40) { text = "SLOWED HIM"; log = "Got a hand in and slowed the attack."; }
+      else { text = "BEATEN!"; log = "Sold a dummy and left for dead."; }
+      flash(card, text, r.score >= 40);
+      tick(ticker, log);
+      return { type: "tackle", score: r.score };
+    },
+
+    async sprint(card, state, ticker) {
+      const pace = state.attributes.speed;
+      const r = await M.tapRush({
+        card, label: "SOLO RUN — BURST CLEAR", sub: "TAP AS FAST AS YOU CAN",
+        targetTaps: Math.round(clamp(30 - pace * 0.16, 14, 30) + state.tierIndex * 1.4),
+        durationMs: 3000,
+      });
+      let text, log;
+      if (r.score >= 75) { text = "BURST CLEAR!"; log = "Left the cover for dead on a driving solo run."; }
+      else if (r.score >= 40) { text = "HELD UP"; log = "Got a few yards before the cover arrived."; }
+      else { text = "SWALLOWED UP"; log = "No legs — swarmed and dispossessed."; }
+      flash(card, text, r.score >= 40);
+      tick(ticker, log);
+      return { type: "sprint", score: r.score };
+    },
+
+    async block(card, state, ticker) {
+      const r = await M.reactionTap({
+        card, label: "SHOT INCOMING — BLOCK IT", sub: "WAIT FOR IT",
+        goodMs: clamp(420 - state.attributes.reflexes * 2.2, 170, 420),
+      });
+      let text, log;
+      if (r.score >= 70) { text = "BLOCKED IT!"; log = "Threw the body on the line — brilliant block."; }
+      else if (r.score >= 40) { text = "DEFLECTED"; log = "Got a fingertip to it and put it wide."; }
+      else { text = "SCORED PAST YOU"; log = "Too slow off the mark — they scored."; }
+      flash(card, text, r.score >= 40);
+      tick(ticker, log);
+      return { type: "block", score: r.score };
+    },
+
+    async pass(card, state, ticker) {
+      const vision = state.attributes.vision;
+      const r = await M.pickThePass({
+        card, label: "PICK THE PASS", sub: "FIND THE RUNNER IN SPACE",
+        decoys: clamp(2 + Math.floor(state.tierIndex / 2), 2, 5),
+        windowMs: clamp(2600 - state.tierIndex * 90 + vision * 8, 1500, 3200),
+      });
+      let text, log;
+      if (r.score >= 70) { text = "SPLIT THE DEFENCE!"; log = "Picked out the runner with a killer ball."; }
+      else if (r.score >= 40) { text = "SAFE BALL"; log = "Took the simple option and kept possession."; }
+      else { text = "TURNOVER!"; log = "Hit it straight to a defender — coughed it up."; }
+      flash(card, text, r.score >= 40);
+      tick(ticker, log);
+      return { type: "pass", score: r.score };
+    },
+  };
+
+  function flash(card, text, good) {
     const el = document.createElement("div");
-    el.className = `gf-moment-flash ${kind === "good" ? "good" : "bad"}`;
+    el.className = `gf-moment-flash ${good ? "good" : "bad"}`;
     el.textContent = text;
     card.appendChild(el);
-    setTimeout(() => el.remove(), 1100);
+    card.classList.remove("shake-good", "shake-bad");
+    void card.offsetWidth;
+    card.classList.add(good ? "shake-good" : "shake-bad");
+    setTimeout(() => el.remove(), 1050);
   }
 
-  function logMoment(ticker, text) {
+  function tick(ticker, text) {
     const line = document.createElement("div");
     line.className = "gf-ticker-line";
     line.textContent = text;
     ticker.prepend(line);
-    while (ticker.children.length > 4) ticker.removeChild(ticker.lastChild);
+    while (ticker.children.length > 3) ticker.removeChild(ticker.lastChild);
   }
 
-  function buildOverlay(state, isFinal, G) {
-    const tier = G.TIERS[state.tierIndex];
+  /** Weighted event plan for this position, with a shot guaranteed somewhere. */
+  function buildPlan(state, G, count) {
+    const pos = G.POSITIONS.find((p) => p.key === state.position) || G.POSITIONS[0];
+    const pool = [];
+    Object.entries(pos.weights).forEach(([kind, w]) => {
+      for (let i = 0; i < w; i++) pool.push(kind);
+    });
+    const plan = [];
+    for (let i = 0; i < count; i++) plan.push(pool[randInt(0, pool.length - 1)]);
+    if (!plan.includes("shot") && !plan.includes("free")) plan[randInt(0, plan.length - 1)] = "shot";
+    return plan;
+  }
+
+  // ---------- Overlay ----------
+
+  function buildOverlay(state, G, meta) {
     const overlay = document.createElement("div");
     overlay.className = "gf-match-overlay";
     overlay.innerHTML = `
       <div class="gf-match-card">
         <div class="gf-match-head">
-          <div class="gf-match-tier">${isFinal ? "ALL-IRELAND FINAL · CROKE PARK" : tier.label.toUpperCase()}</div>
+          <div class="gf-match-tier">${meta.label.toUpperCase()}</div>
           <div class="gf-match-vs">
-            <span class="team you">${state.club || state.county}</span>
+            <span class="team you">${G.teamName(state)}</span>
             <span class="vs">v</span>
-            <span class="team rival" id="gf-rival-name">Opponents</span>
+            <span class="team rival">${meta.oppName}</span>
           </div>
         </div>
         <div class="gf-pitch">
@@ -227,99 +196,84 @@
     intro.innerHTML = `<div class="gf-throwin-text">THROW IN!</div>`;
     pitchEl.appendChild(intro);
     A.whistle();
-    await new Promise((r) => setTimeout(r, 900));
+    await new Promise((r) => setTimeout(r, 850));
     intro.remove();
   }
 
-  function renderFullTime(overlay, { isFinal, summary, skillIndex, G, onContinue }) {
+  function renderFullTime(overlay, { state, G, summary, onContinue }) {
     const card = overlay.querySelector(".gf-match-card");
-    const you = summary.yourScore;
-    const opp = summary.oppScore;
-    const win = isFinal ? summary.win : summary.result === "win";
-    const draw = !isFinal && summary.result === "draw";
+    const win = summary.result === "win";
+    const draw = summary.result === "draw";
 
     if (win) A.cheer();
-    const trophyMoment = isFinal ? summary.win || summary.wonAllStar : summary.promoted;
-    if (trophyMoment) {
-      A.trophy();
-      C.burst({});
-    }
+    const bigMoment = summary.championshipWon || summary.allIreland;
+    if (bigMoment) { A.trophy(); C.burst({}); }
+
+    const pos = state.league ? window.GaaSeason.playerPosition(state.league) : null;
+    const badges = [];
+    if (summary.motm) badges.push(`<div class="gf-motm-banner">⭐ MAN OF THE MATCH</div>`);
+    if (summary.allIreland) badges.push(`<div class="gf-motm-banner gold">🏆 ALL-IRELAND CHAMPIONS</div>`);
+    else if (summary.championshipWon) badges.push(`<div class="gf-motm-banner gold">🏆 CHAMPIONSHIP WINNERS</div>`);
+    if (summary.eliminated) badges.push(`<div class="gf-motm-banner">Season over — knocked out.</div>`);
 
     card.innerHTML = `
       <div class="gf-fulltime">
         <div class="gf-fulltime-label">FULL TIME</div>
         <div class="gf-score-final">
-          <span>${G.scoreString(you)} <small>(${you.total})</small></span>
+          <span>${G.scoreString(summary.yourScore)} <small>(${summary.yourScore.total})</small></span>
           <span class="dim">—</span>
-          <span>${G.scoreString(opp)} <small>(${opp.total})</small></span>
+          <span>${G.scoreString(summary.oppScore)} <small>(${summary.oppScore.total})</small></span>
         </div>
         <div class="gf-result-banner ${win ? "win" : draw ? "draw" : "loss"}">
-          ${win ? (isFinal ? "CHAMPIONS!" : "WIN") : draw ? "DRAW" : "DEFEAT"}
+          ${win ? "WIN" : draw ? "DRAW" : "DEFEAT"}
         </div>
-        ${summary.motm ? `<div class="gf-motm-banner">⭐ MAN OF THE MATCH</div>` : ""}
-        ${isFinal && summary.wonAllStar ? `<div class="gf-motm-banner gold">🏆 ALL STAR AWARDED</div>` : ""}
-        ${!isFinal && summary.promoted ? `<div class="gf-motm-banner gold">🎉 PROMOTED!</div>` : ""}
-        ${!isFinal && summary.readyForFinal ? `<div class="gf-motm-banner gold">🏟️ ALL-IRELAND FINAL AWAITS!</div>` : ""}
+        ${badges.join("")}
         <div class="gf-skill-index">
-          <div class="l">Your performance rating — ${skillIndex}</div>
-          <div class="gf-bar-track"><div class="gf-bar-fill" style="width:${skillIndex}%"></div></div>
+          <div class="l">Performance rating · ${summary.skillIndex}</div>
+          <div class="gf-bar-track"><div class="gf-bar-fill" style="width:${summary.skillIndex}%"></div></div>
         </div>
         <div class="gf-rewards">
-          <div class="gf-reward"><div class="n">+${summary.trainingPointsEarned}</div><div class="l">Training pts</div></div>
-          ${!isFinal ? `<div class="gf-reward"><div class="n">+${summary.repEarned}</div><div class="l">Reputation</div></div>` : ""}
+          <div class="gf-reward"><div class="n">+${summary.tpEarned}</div><div class="l">Training pts</div></div>
+          ${summary.kind === "league" && pos ? `<div class="gf-reward"><div class="n">${G.ordinal(pos)}</div><div class="l">In the table</div></div>` : ""}
         </div>
         <button class="btn btn-primary" data-action="match-continue">Continue</button>
       </div>
     `;
-    card.querySelector('[data-action="match-continue"]').addEventListener("click", () => {
-      overlay.remove();
-      onContinue();
-    });
+    card.querySelector('[data-action="match-continue"]')
+      .addEventListener("click", () => { overlay.remove(); onContinue(); });
   }
 
-  async function start(state, G, isFinal, onComplete) {
+  async function start(state, G, kind, onComplete) {
     A.unlock();
-    const overlay = buildOverlay(state, isFinal, G);
+    const meta = kind === "championship" ? G.nextChampionshipFixture(state) : G.nextLeagueFixture(state);
+    if (!meta) return;
+
+    const overlay = buildOverlay(state, G, meta);
     const pitchEl = overlay.querySelector(".gf-pitch");
     const cardInner = overlay.querySelector(".gf-card-inner");
     const ticker = overlay.querySelector(".gf-moment-ticker");
-    const rivalNames = ["Gaels", "O'Connells", "Emmets", "Rovers", "Sarsfields", "Parnells", "St. Brigid's", "Shamrocks"];
-    overlay.querySelector("#gf-rival-name").textContent = isFinal
-      ? "Rival County"
-      : rivalNames[randInt(0, rivalNames.length - 1)];
 
     await playIntro(pitchEl);
 
-    const plan = shuffle(["catch", "tackle", "shot"]);
-    plan.push(["shot", "catch", "tackle"][randInt(0, 2)]);
-    if (isFinal) plan.push(["shot", "catch", "tackle"][randInt(0, 2)], "shot");
+    const count = kind === "championship" ? (meta.isFinal ? 8 : 7) : 6;
+    const plan = buildPlan(state, G, count);
 
     const events = [];
-    for (const kind of plan) {
-      let ev;
-      if (kind === "shot") ev = await runShotEvent(cardInner, state, ticker);
-      else if (kind === "catch") ev = await runCatchEvent(cardInner, state, ticker);
-      else ev = await runTackleEvent(cardInner, state, ticker);
-      events.push(ev);
-      await new Promise((r) => setTimeout(r, 260));
+    for (const k of plan) {
+      const fn = k === "catch" ? EVENTS.catch_ : EVENTS[k];
+      events.push(await fn(cardInner, state, ticker));
+      await new Promise((r) => setTimeout(r, 240));
     }
 
     const contribution = G.resolvePlayerEvents(events);
-    let newState;
-    let summary;
-    if (isFinal) {
-      newState = G.playAllIrelandFinal(state, contribution);
-      summary = newState.lastFinalSummary;
-    } else {
-      newState = G.playMatch(state, contribution);
-      summary = newState.lastMatchSummary;
-    }
+    const newState = kind === "championship"
+      ? G.playChampionshipMatch(state, contribution)
+      : G.playLeagueMatch(state, contribution);
 
     renderFullTime(overlay, {
-      isFinal,
-      summary,
-      skillIndex: contribution.skillIndex,
+      state: newState,
       G,
+      summary: newState.lastMatchSummary,
       onContinue: () => onComplete(newState),
     });
   }

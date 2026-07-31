@@ -26,7 +26,7 @@ const css = read("styles.css")
   .replace(/^@import url\([^)]*\);\s*$/m, "")
   .concat(SYSTEM_FONTS);
 
-const scripts = ["data.js", "audio.js", "confetti.js", "match.js", "app.js"]
+const scripts = ["season.js", "data.js", "audio.js", "confetti.js", "minigames.js", "match.js", "app.js"]
   .map((f) => `<script>\n${read(f)}\n</script>`)
   .join("\n");
 
@@ -34,7 +34,8 @@ const html = `<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+<meta name="mobile-web-app-capable" content="yes" />
 <title>GAA Career — Junior B to All-Ireland</title>
 <meta name="description" content="A level-up career game: start at Junior B club football and work your way to a county All-Ireland and an All Star." />
 <meta name="theme-color" content="#0E1116" />

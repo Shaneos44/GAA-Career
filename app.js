@@ -1,12 +1,15 @@
-// GAA Career — rendering & save/load. Talks to window.GaaCareer for all
-// game logic; this file only turns state into HTML and wires up clicks.
+// GAA Career — UI shell. Renders the career screens and routes actions to
+// data.js / match.js. Mobile-first: a bottom tab bar, thumb-reachable
+// primary actions, and no hover-dependent affordances.
 
 (function () {
-  const SAVE_KEY = "gaa-career-save-v1";
+  const SAVE_KEY = "gaa-career-save-v2";
   const G = window.GaaCareer;
+  const S = window.GaaSeason;
   const app = document.getElementById("app");
 
   let state = load();
+  let tab = "season";
 
   function load() {
     try {
@@ -16,210 +19,345 @@
       return null;
     }
   }
-
   function save() {
-    try {
-      localStorage.setItem(SAVE_KEY, JSON.stringify(state));
-    } catch (e) {
-      /* storage unavailable — game still works, just won't persist */
-    }
+    try { localStorage.setItem(SAVE_KEY, JSON.stringify(state)); } catch (e) { /* private mode */ }
   }
-
-  function setState(next) {
-    state = next;
-    save();
-    render();
-  }
+  function setState(next) { state = next; save(); render(); }
 
   function esc(str) {
-    const div = document.createElement("div");
-    div.textContent = str;
-    return div.innerHTML;
+    const d = document.createElement("div");
+    d.textContent = str == null ? "" : str;
+    return d.innerHTML;
   }
 
-  // ---------- Setup screen ----------
+  // ---------- Setup ----------
 
   function renderSetup() {
-    const options = G.COUNTIES.map((c) => `<option value="${c}">${c}</option>`).join("");
     app.innerHTML = `
       <div class="gf-wrap gf-setup">
+        <div class="gf-crest">⚽</div>
         <h1>GAA Career</h1>
-        <p class="dim">Start out with your club's Junior B side and work your way up — Junior A, Intermediate,
-          Senior, the county panel, and eventually a shot at the All-Ireland and an All Star. Train up your
-          attributes, play matches, and climb the ladder.</p>
+        <p class="dim">Ten league games a season. Win your division to go up,
+          finish bottom and you go down. Then it's knockout championship
+          football — all the way to Sam Maguire.</p>
+
         <div class="panel">
           <div class="field">
             <label for="f-name">Player name</label>
-            <input id="f-name" type="text" placeholder="e.g. Cian Walsh" maxlength="30" />
+            <input id="f-name" type="text" placeholder="Cian Walsh" maxlength="24" autocomplete="off" />
+          </div>
+          <div class="field">
+            <label for="f-club">Club</label>
+            <input id="f-club" type="text" placeholder="St. Brigid's" maxlength="24" autocomplete="off" />
           </div>
           <div class="field">
             <label for="f-county">County</label>
-            <select id="f-county">${options}</select>
+            <select id="f-county">${G.COUNTIES.map((c) => `<option${c === "Mayo" ? " selected" : ""}>${c}</option>`).join("")}</select>
           </div>
-          <div class="field">
-            <label for="f-club">Club name</label>
-            <input id="f-club" type="text" placeholder="e.g. St. Brigid's" maxlength="30" />
-          </div>
-          <button class="btn btn-primary" data-action="start" style="margin-top:6px">Start Career</button>
-        </div>
-      </div>
-    `;
-  }
-
-  // ---------- Game screen ----------
-
-  function tierLadderHtml() {
-    return G.TIERS.map((tier, i) => {
-      let cls = "gf-ladder-step";
-      if (i < state.tierIndex) cls += " done";
-      else if (i === state.tierIndex) cls += " current";
-      return `<div class="${cls}"><span class="dot"></span>${esc(tier.label)}</div>`;
-    }).join("");
-  }
-
-  function attrsHtml() {
-    return G.ATTRS.map((a) => {
-      const value = state.attributes[a.key];
-      const cost = G.upgradeCost(value);
-      const affordable = state.trainingPoints >= cost && Number.isFinite(cost);
-      return `
-        <div class="gf-attr">
-          <div class="gf-attr-head">
-            <span class="name">${esc(a.label)}</span>
-            <span class="val">${value}/99</span>
-          </div>
-          <div class="gf-attr-row">
-            <div class="gf-bar-track"><div class="gf-bar-fill" style="width:${value}%"></div></div>
-            <button class="gf-upgrade-btn" data-action="upgrade" data-key="${a.key}"
-              ${affordable ? "" : "disabled"} title="Spend ${Number.isFinite(cost) ? cost : "—"} training pts">+</button>
-          </div>
-        </div>
-      `;
-    }).join("");
-  }
-
-  function logHtml() {
-    return state.log
-      .map((entry) => `<div class="gf-log-item ${entry.type}">${esc(entry.text)}</div>`)
-      .join("");
-  }
-
-  function actionOrFinalHtml() {
-    if (state.readyForFinal) {
-      return `
-        <div class="gf-final-panel">
-          <h2>🏆 All-Ireland Final Day</h2>
-          <p>${esc(state.county)} have reached Croke Park. Throw-in is minutes away.</p>
-          <button class="btn btn-primary" data-action="final">Play the Final</button>
-        </div>
-      `;
-    }
-    const tier = G.TIERS[state.tierIndex];
-    const repPct = Math.min(100, Math.round((state.reputation / tier.repNeeded) * 100));
-    const canPlay = state.energy >= 15;
-    return `
-      <div class="panel">
-        <div class="gf-row-between">
-          <span class="k">${esc(tier.label)} <span class="dim">· ${esc(tier.level)}</span></span>
-          <span class="v">${state.reputation}/${tier.repNeeded} rep</span>
-        </div>
-        <div class="gf-bar-track"><div class="gf-bar-fill" style="width:${repPct}%"></div></div>
-        <div class="gf-ladder">${tierLadderHtml()}</div>
-      </div>
-      <div class="panel">
-        <div class="gf-row-between">
-          <span class="k">Energy</span>
-          <span class="v">${state.energy}/100</span>
-        </div>
-        <div class="gf-bar-track"><div class="gf-bar-fill energy ${state.energy < 30 ? "low" : ""}" style="width:${state.energy}%"></div></div>
-        <div class="gf-actions">
-          <button class="btn btn-primary" data-action="match" ${canPlay ? "" : "disabled"}>${canPlay ? "Play Match" : "Need energy"}</button>
-          <button class="btn" data-action="rest">Rest</button>
-        </div>
-      </div>
-    `;
-  }
-
-  function render() {
-    if (!state) {
-      renderSetup();
-      wireSetup();
-      return;
-    }
-
-    const overall = G.computeOverall(state.attributes);
-    const c = state.career;
-
-    app.innerHTML = `
-      <div class="gf-wrap">
-        <div class="gf-header">
-          <div>
-            <div class="gf-title">${esc(state.name)}</div>
-            <div class="gf-sub">${esc(state.club)} · ${esc(state.county)} · Season ${state.season} · Overall ${overall}</div>
-          </div>
-          <button class="btn btn-quiet btn-sm" data-action="reset">Reset</button>
-        </div>
-
-        <div class="gf-trophies">
-          <div class="gf-trophy"><div class="n">${c.allIrelands}</div><div class="l">All-Irelands</div></div>
-          <div class="gf-trophy"><div class="n">${c.allStars}</div><div class="l">All Stars</div></div>
-          <div class="gf-trophy"><div class="n">${c.wins}/${c.matches}</div><div class="l">Career W/P</div></div>
-        </div>
-
-        ${actionOrFinalHtml()}
-
-        <div class="panel">
-          <div class="gf-row-between">
-            <span class="k">Attributes</span>
-            <span class="gf-tp">⚡ ${state.trainingPoints} training pts</span>
-          </div>
-          ${attrsHtml()}
         </div>
 
         <div class="panel">
-          <div class="gf-row-between"><span class="k">Match News</span></div>
-          <div class="gf-log">${logHtml()}</div>
+          <label>Position</label>
+          <div class="gf-pos-grid">
+            ${G.POSITIONS.map((p, i) => `
+              <button class="gf-pos ${i === 0 ? "on" : ""}" data-pos="${p.key}">
+                <span class="n">${esc(p.label)}</span>
+                <span class="b">${esc(p.blurb)}</span>
+              </button>`).join("")}
+          </div>
+          <p class="dim small" style="margin-top:10px">Your position decides which match situations you face.</p>
         </div>
+
+        <button class="btn btn-primary btn-lg" data-action="start">Start Career</button>
       </div>
     `;
 
-    wireGame();
-  }
-
-  // ---------- Event wiring ----------
-
-  function wireSetup() {
+    let chosen = G.POSITIONS[0].key;
+    app.querySelectorAll(".gf-pos").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        chosen = btn.dataset.pos;
+        app.querySelectorAll(".gf-pos").forEach((b) => b.classList.toggle("on", b === btn));
+      });
+    });
     app.querySelector('[data-action="start"]').addEventListener("click", () => {
-      const name = document.getElementById("f-name").value;
-      const county = document.getElementById("f-county").value;
-      const club = document.getElementById("f-club").value;
-      setState(G.createCareer({ name, county, club }));
+      setState(G.createCareer({
+        name: document.getElementById("f-name").value,
+        club: document.getElementById("f-club").value,
+        county: document.getElementById("f-county").value,
+        positionKey: chosen,
+      }));
     });
   }
 
-  function wireGame() {
-    const matchBtn = app.querySelector('[data-action="match"]');
-    if (matchBtn) matchBtn.addEventListener("click", () => window.GaaMatch.start(state, G, false, setState));
+  // ---------- Shared chrome ----------
 
-    const restBtn = app.querySelector('[data-action="rest"]');
-    if (restBtn) restBtn.addEventListener("click", () => setState(G.restUp(state)));
+  function headerHtml() {
+    const tier = G.TIERS[state.tierIndex];
+    const overall = G.computeOverall(state.attributes);
+    const pos = G.POSITIONS.find((p) => p.key === state.position);
+    return `
+      <header class="gf-header">
+        <div class="gf-id">
+          <div class="gf-title">${esc(state.name)}</div>
+          <div class="gf-sub">${esc(pos.label)} · ${esc(G.teamName(state))} · ${esc(tier.label)}</div>
+        </div>
+        <div class="gf-ovr" title="Overall rating"><span>${overall}</span><small>OVR</small></div>
+      </header>
+      <div class="gf-statstrip">
+        <div class="gf-stat"><span class="l">Season</span><span class="v">${state.season}</span></div>
+        <div class="gf-stat"><span class="l">All-Irelands</span><span class="v gold">${state.career.allIrelands}</span></div>
+        <div class="gf-stat"><span class="l">All Stars</span><span class="v gold">${state.career.allStars}</span></div>
+        <div class="gf-stat"><span class="l">Form</span><span class="v">${formHtml()}</span></div>
+      </div>
+    `;
+  }
 
-    const finalBtn = app.querySelector('[data-action="final"]');
-    if (finalBtn) finalBtn.addEventListener("click", () => window.GaaMatch.start(state, G, true, setState));
+  function formHtml() {
+    if (!state.form.length) return `<span class="dim">—</span>`;
+    return state.form.map((r) => `<i class="gf-form ${r.toLowerCase()}">${r}</i>`).join("");
+  }
+
+  function energyHtml() {
+    const low = state.energy < 30;
+    return `
+      <div class="panel">
+        <div class="gf-row-between">
+          <span class="k">Energy${state.injury ? ` <span class="gf-injury">· ${esc(state.injury.label)}</span>` : ""}</span>
+          <span class="v">${state.energy}/100</span>
+        </div>
+        <div class="gf-bar-track"><div class="gf-bar-fill energy ${low ? "low" : ""}" style="width:${state.energy}%"></div></div>
+        ${low ? `<p class="dim small" style="margin:8px 0 0">Running on empty — you'll play worse and risk a knock. Rest up.</p>` : ""}
+      </div>
+    `;
+  }
+
+  // ---------- Season tab ----------
+
+  function seasonTabHtml() {
+    if (state.phase === "offseason") return offseasonHtml();
+
+    const tier = G.TIERS[state.tierIndex];
+    const isChamp = state.phase === "championship";
+    const meta = isChamp ? G.nextChampionshipFixture(state) : G.nextLeagueFixture(state);
+    const blocked = !!state.injury;
+
+    let fixtureCard;
+    if (!meta) {
+      fixtureCard = `<div class="panel"><p class="dim">No fixture scheduled.</p></div>`;
+    } else {
+      fixtureCard = `
+        <div class="gf-fixture ${isChamp ? "champ" : ""}">
+          <div class="gf-fixture-tag">${isChamp ? "🏆 " : ""}${esc(meta.label)}</div>
+          <div class="gf-fixture-teams">
+            <span>${esc(G.teamName(state))}</span>
+            <span class="vs">v</span>
+            <span>${esc(meta.oppName)}</span>
+          </div>
+          ${!isChamp ? `<div class="gf-fixture-venue">${meta.atHome ? "Home" : "Away"} · Round ${state.league.round + 1} of ${S.LEAGUE_ROUNDS}</div>` : `<div class="gf-fixture-venue">Win or your season is over</div>`}
+          ${blocked
+            ? `<p class="gf-blocked">Injured — ${esc(state.injury.label)}. Rest to recover (${state.injury.games} game${state.injury.games > 1 ? "s" : ""}).</p>`
+            : `<button class="btn btn-primary btn-lg" data-action="${isChamp ? "play-champ" : "play-league"}">Play Match</button>`}
+          <button class="btn" data-action="rest">Rest Up</button>
+        </div>
+      `;
+    }
+
+    return `
+      ${fixtureCard}
+      ${energyHtml()}
+      ${!isChamp ? leagueProgressHtml() : ""}
+      <div class="panel">
+        <div class="gf-row-between"><span class="k">Match News</span></div>
+        <div class="gf-log">${state.log.map((e) => `<div class="gf-log-item ${e.type}">${esc(e.text)}</div>`).join("")}</div>
+      </div>
+    `;
+  }
+
+  function leagueProgressHtml() {
+    const played = state.league.round;
+    const pct = Math.round((played / S.LEAGUE_ROUNDS) * 100);
+    const pos = S.playerPosition(state.league);
+    return `
+      <div class="panel">
+        <div class="gf-row-between">
+          <span class="k">League progress</span>
+          <span class="v">${played}/${S.LEAGUE_ROUNDS} played · ${G.ordinal(pos)}</span>
+        </div>
+        <div class="gf-bar-track"><div class="gf-bar-fill" style="width:${pct}%"></div></div>
+        <p class="dim small" style="margin:10px 0 0">
+          Win the division to go up. Finish ${S.TEAMS_PER_DIVISION}th and you go down.
+        </p>
+      </div>
+    `;
+  }
+
+  function offseasonHtml() {
+    const champ = state.championship || {};
+    const tier = G.TIERS[state.tierIndex];
+    const change = state.pendingTierChange || 0;
+    return `
+      <div class="gf-final-panel">
+        <h2>Season ${state.season} complete</h2>
+        <p>
+          Finished ${G.ordinal(state.leagueFinishPos || S.TEAMS_PER_DIVISION)} in ${esc(tier.division)}.
+          ${champ.won ? "Championship won." : "Knocked out of the championship."}
+        </p>
+        ${change > 0 ? `<div class="gf-motm-banner gold">⬆ Promoted to ${esc(G.TIERS[state.tierIndex + 1].division)}</div>` : ""}
+        ${change < 0 ? `<div class="gf-motm-banner">⬇ Relegated to ${esc(G.TIERS[state.tierIndex - 1].division)}</div>` : ""}
+        <button class="btn btn-primary btn-lg" data-action="next-season">Start Season ${state.season + 1}</button>
+      </div>
+      <div class="panel">
+        <div class="gf-row-between"><span class="k">Season Review</span></div>
+        <div class="gf-log">${state.log.map((e) => `<div class="gf-log-item ${e.type}">${esc(e.text)}</div>`).join("")}</div>
+      </div>
+    `;
+  }
+
+  // ---------- Table tab ----------
+
+  function tableTabHtml() {
+    const tier = G.TIERS[state.tierIndex];
+    const rows = S.sortTable(state.league.table);
+    const last = S.TEAMS_PER_DIVISION;
+    return `
+      <div class="panel">
+        <div class="gf-row-between">
+          <span class="k">${esc(tier.division)}</span>
+          <span class="v">Season ${state.season}</span>
+        </div>
+        <div class="gf-table-scroll">
+          <table class="gf-table">
+            <thead>
+              <tr><th>#</th><th class="tl">Team</th><th>P</th><th>W</th><th>D</th><th>L</th><th>+/−</th><th>Pts</th></tr>
+            </thead>
+            <tbody>
+              ${rows.map((r, i) => `
+                <tr class="${r.isPlayer ? "me" : ""} ${i === 0 ? "promo" : ""} ${i === last - 1 ? "releg" : ""}">
+                  <td>${i + 1}</td>
+                  <td class="tl">${esc(r.name)}</td>
+                  <td>${r.p}</td><td>${r.w}</td><td>${r.d}</td><td>${r.l}</td>
+                  <td>${r.f - r.a > 0 ? "+" : ""}${r.f - r.a}</td>
+                  <td class="pts">${r.pts}</td>
+                </tr>`).join("")}
+            </tbody>
+          </table>
+        </div>
+        <div class="gf-legend">
+          <span><i class="sw promo"></i> Promoted</span>
+          <span><i class="sw releg"></i> Relegated</span>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="gf-row-between"><span class="k">The Ladder</span></div>
+        <div class="gf-ladder">
+          ${G.TIERS.map((t, i) => `
+            <div class="gf-ladder-step ${i < state.tierIndex ? "done" : ""} ${i === state.tierIndex ? "current" : ""}">
+              <span class="dot"></span>${esc(t.division)}
+            </div>`).join("")}
+        </div>
+      </div>
+    `;
+  }
+
+  // ---------- Player tab ----------
+
+  function playerTabHtml() {
+    const c = state.career;
+    return `
+      <div class="panel">
+        <div class="gf-row-between">
+          <span class="k">Attributes</span>
+          <span class="gf-tp">⚡ ${state.trainingPoints} pts</span>
+        </div>
+        ${G.ATTRS.map((a) => {
+          const v = state.attributes[a.key];
+          const cost = G.upgradeCost(v);
+          const can = Number.isFinite(cost) && state.trainingPoints >= cost;
+          return `
+            <div class="gf-attr">
+              <div class="gf-attr-head">
+                <span class="name">${esc(a.label)} <span class="dim">${esc(a.hint)}</span></span>
+                <span class="val">${v}</span>
+              </div>
+              <div class="gf-attr-row">
+                <div class="gf-bar-track"><div class="gf-bar-fill" style="width:${v}%"></div></div>
+                <button class="gf-upgrade-btn" data-action="upgrade" data-key="${a.key}" ${can ? "" : "disabled"}>
+                  +<small>${Number.isFinite(cost) ? cost : "—"}</small>
+                </button>
+              </div>
+            </div>`;
+        }).join("")}
+      </div>
+
+      <div class="panel">
+        <div class="gf-row-between"><span class="k">Career Record</span></div>
+        <div class="gf-record">
+          ${[
+            ["Played", c.matches], ["Won", c.wins], ["Drawn", c.draws], ["Lost", c.losses],
+            ["Goals", c.goals], ["Points", c.points], ["MOTM", c.motm],
+            ["Leagues", c.leaguesWon], ["Championships", c.championships],
+            ["Promotions", c.promotions], ["Relegations", c.relegations],
+            ["All-Irelands", c.allIrelands], ["All Stars", c.allStars],
+          ].map(([l, v]) => `<div class="gf-rec"><span class="n">${v}</span><span class="l">${l}</span></div>`).join("")}
+        </div>
+      </div>
+
+      <div class="panel">
+        <button class="btn btn-quiet" data-action="reset">Retire &amp; start a new career</button>
+      </div>
+    `;
+  }
+
+  // ---------- Render ----------
+
+  function render() {
+    if (!state) { renderSetup(); return; }
+    if (state.phase === "offseason") tab = "season";
+
+    const body = tab === "table" ? tableTabHtml() : tab === "player" ? playerTabHtml() : seasonTabHtml();
+
+    app.innerHTML = `
+      <div class="gf-app">
+        <div class="gf-wrap">
+          ${headerHtml()}
+          ${body}
+        </div>
+        <nav class="gf-tabbar">
+          <button class="gf-tabbtn ${tab === "season" ? "on" : ""}" data-tab="season"><span>🏟️</span>Season</button>
+          <button class="gf-tabbtn ${tab === "table" ? "on" : ""}" data-tab="table"><span>📊</span>Table</button>
+          <button class="gf-tabbtn ${tab === "player" ? "on" : ""}" data-tab="player"><span>👤</span>Player</button>
+        </nav>
+      </div>
+    `;
+    wire();
+  }
+
+  function wire() {
+    app.querySelectorAll("[data-tab]").forEach((b) => {
+      b.addEventListener("click", () => { tab = b.dataset.tab; render(); });
+    });
+
+    const on = (sel, fn) => {
+      const el = app.querySelector(sel);
+      if (el) el.addEventListener("click", fn);
+    };
+
+    on('[data-action="play-league"]', () => window.GaaMatch.start(state, G, "league", setState));
+    on('[data-action="play-champ"]', () => window.GaaMatch.start(state, G, "championship", setState));
+    on('[data-action="rest"]', () => setState(G.restUp(state)));
+    on('[data-action="next-season"]', () => setState(G.startNextSeason(state)));
+    on('[data-action="reset"]', () => {
+      if (confirm("Retire this player and start over? Your career record will be lost.")) {
+        localStorage.removeItem(SAVE_KEY);
+        state = null;
+        tab = "season";
+        render();
+      }
+    });
 
     app.querySelectorAll('[data-action="upgrade"]').forEach((btn) => {
       btn.addEventListener("click", () => setState(G.upgradeAttribute(state, btn.dataset.key)));
     });
-
-    const resetBtn = app.querySelector('[data-action="reset"]');
-    if (resetBtn) {
-      resetBtn.addEventListener("click", () => {
-        if (confirm("Retire this player and start a brand new career? This cannot be undone.")) {
-          localStorage.removeItem(SAVE_KEY);
-          setState(null);
-        }
-      });
-    }
   }
 
   render();
