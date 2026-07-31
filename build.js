@@ -31,7 +31,7 @@ const APP_DESC =
   "A skill-based Gaelic football career game. Win your division, survive the championship, " +
   "and climb from Junior B club football to an All-Ireland and an All Star.";
 const THEME = "#0E1116";
-const CONTACT = "CONTACT_EMAIL_HERE";
+const CONTACT = "shanesullivan44@yahoo.ie";
 
 const SYSTEM_FONTS = `
 /* Bundled build: system faces only — no network requests. */
