@@ -50,16 +50,33 @@ Man of the Match odds, and All Star chances.
 
 Progress is saved automatically to your browser's local storage.
 
-## Running it
+## Playing it
 
-No build step — it's plain HTML/CSS/JS. Either open `index.html`
-directly in a browser, or serve the folder locally, e.g.:
+**Easiest — one file.** Download just `gaa-career.html` and double-click
+it. It's the whole game bundled into a single self-contained file with
+no other downloads and no network access needed.
+
+**Or host it.** Push this repo and turn on GitHub Pages
+(Settings → Pages → Source: *Deploy from a branch* → `main` / `root`).
+The game is then playable at
+`https://<user>.github.io/GAA-Career/` — no download at all.
+
+**Or run it locally from source:**
 
 ```
 python3 -m http.server 8080
 ```
 
 then visit `http://localhost:8080`.
+
+### Rebuilding the single file
+
+`gaa-career.html` is generated from the source files. After editing any
+of them, regenerate it with:
+
+```
+node build.js
+```
 
 ## Files
 
@@ -72,3 +89,5 @@ then visit `http://localhost:8080`.
 - `audio.js` — procedural sound effects (WebAudio, no audio files)
 - `confetti.js` — canvas confetti burst for trophy moments
 - `app.js` — career-screen rendering and save/load (localStorage)
+- `build.js` — bundles all of the above into `gaa-career.html`
+- `gaa-career.html` — generated single-file build (don't edit by hand)

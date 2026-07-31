@@ -1,0 +1,1479 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+<title>GAA Career — Junior B to All-Ireland</title>
+<meta name="description" content="A level-up career game: start at Junior B club football and work your way to a county All-Ireland and an All Star." />
+<meta name="theme-color" content="#0E1116" />
+<style>
+/* GAA Career — dark, GAA green/gold accented UI. Self-contained, no build step. */
+
+
+:root {
+  /* Font stacks live in tokens so build.js can swap them for system faces
+     in the single-file build, where a font CDN may be blocked. */
+  --font-display: 'Bricolage Grotesque', ui-sans-serif, system-ui, sans-serif;
+  --font-body:    Inter, ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono:    'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+
+  --bg:        #0E1116;
+  --surface:   #161A21;
+  --surface-2: #1E242D;
+  --edge:      #2A313C;
+  --edge-lit:  #3A4452;
+  --text:      #EDF0F4;
+  --text-dim:  #8A93A2;
+  --signal:    #2E8B57;   /* GAA pitch green */
+  --signal-d:  #23724A;
+  --signal-ink:#FFFFFF;
+  --gold:      #F2C94C;
+  --r:  12px;
+  --r-lg: 18px;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; background: var(--bg); }
+body {
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 16px; line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+h1, h2 {
+  font-family: var(--font-display);
+  font-weight: 800; letter-spacing: -0.03em; line-height: 1.05; margin: 0;
+}
+
+.dim { color: var(--text-dim); }
+
+/* ---------- Panels ---------- */
+.panel {
+  background: var(--surface); border: 1px solid var(--edge);
+  border-radius: var(--r-lg); padding: 16px; margin-bottom: 12px;
+}
+label { display: block; font-size: 12px; font-weight: 600; letter-spacing: .06em;
+        text-transform: uppercase; color: var(--text-dim); margin-bottom: 7px; }
+input, select {
+  width: 100%; min-height: 48px; padding: 12px 14px;
+  background: var(--surface-2); color: var(--text);
+  border: 1px solid var(--edge); border-radius: var(--r);
+  font-family: inherit; font-size: 16px;
+}
+input:focus, select:focus {
+  outline: none; border-color: var(--signal);
+  box-shadow: 0 0 0 3px rgba(46,139,87,.25);
+}
+.field { margin-bottom: 14px; }
+.field:last-child { margin-bottom: 0; }
+
+/* ---------- Buttons ---------- */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%; min-height: 50px; padding: 0 20px;
+  border-radius: var(--r); border: 1px solid var(--edge-lit);
+  background: var(--surface-2); color: var(--text);
+  font-family: inherit; font-size: 16px; font-weight: 600;
+  cursor: pointer; text-decoration: none;
+  transition: transform .08s ease, background .15s ease, border-color .15s ease;
+}
+.btn:hover:not(:disabled) { background: #252C36; }
+.btn:active:not(:disabled) { transform: scale(.985); }
+.btn:disabled { opacity: .4; cursor: not-allowed; }
+.btn-primary {
+  background: var(--signal); color: var(--signal-ink); border-color: var(--signal);
+  font-weight: 700;
+}
+.btn-primary:hover:not(:disabled) { background: var(--signal-d); border-color: var(--signal-d); }
+.btn-quiet { background: transparent; border-color: transparent; color: var(--text-dim); }
+.btn-quiet:hover:not(:disabled) { background: var(--surface-2); color: var(--text); }
+.btn-sm { min-height: 38px; width: auto; font-size: 13px; padding: 0 14px; border-radius: 9px; }
+
+/* ---------- GAA Career specific ---------- */
+.gf-wrap { max-width: 640px; margin: 0 auto; padding: 20px 16px 60px; }
+
+.gf-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 14px; }
+.gf-title { font-family: var(--font-display); font-weight: 800; font-size: 22px; letter-spacing: -0.02em; }
+.gf-sub { color: var(--text-dim); font-size: 13px; margin-top: 2px; }
+
+.gf-trophies { display: flex; gap: 10px; margin-bottom: 14px; }
+.gf-trophy { flex: 1; background: var(--surface); border: 1px solid var(--edge); border-radius: var(--r); padding: 10px 12px; text-align: center; }
+.gf-trophy .n { font-family: var(--font-mono); font-size: 20px; font-weight: 700; color: var(--gold); }
+.gf-trophy .l { font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-dim); margin-top: 2px; }
+
+.gf-bar-track { background: var(--surface-2); border-radius: 999px; height: 10px; overflow: hidden; border: 1px solid var(--edge); }
+.gf-bar-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, #2E8B57, #6FCF97); transition: width .4s ease; }
+.gf-bar-fill.energy { background: linear-gradient(90deg, #C06B31, #F2C94C); }
+.gf-bar-fill.energy.low { background: linear-gradient(90deg, #C0392B, #FF6B6B); }
+
+.gf-row-between { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+.gf-row-between .k { font-size: 13px; font-weight: 600; }
+.gf-row-between .v { font-size: 12px; color: var(--text-dim); font-family: var(--font-mono); }
+
+.gf-ladder { display: flex; flex-direction: column; gap: 4px; margin-top: 12px; }
+.gf-ladder-step { display: flex; align-items: center; gap: 8px; font-size: 12px; padding: 5px 8px; border-radius: 8px; color: var(--text-dim); }
+.gf-ladder-step .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--edge-lit); flex-shrink: 0; }
+.gf-ladder-step.done { color: var(--text); }
+.gf-ladder-step.done .dot { background: #6FCF97; }
+.gf-ladder-step.current { background: rgba(46,139,87,.12); color: var(--text); font-weight: 700; }
+.gf-ladder-step.current .dot { background: var(--gold); box-shadow: 0 0 0 4px rgba(242,201,76,.2); }
+
+.gf-attr { margin-bottom: 12px; }
+.gf-attr:last-child { margin-bottom: 0; }
+.gf-attr-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+.gf-attr-head .name { font-size: 13px; font-weight: 600; }
+.gf-attr-head .val { font-family: var(--font-mono); font-size: 13px; color: var(--text-dim); }
+.gf-attr-row { display: flex; align-items: center; gap: 8px; }
+.gf-attr-row .gf-bar-track { flex: 1; height: 8px; }
+.gf-upgrade-btn {
+  flex-shrink: 0; width: 34px; height: 30px; border-radius: 8px;
+  border: 1px solid var(--edge-lit); background: var(--surface-2); color: var(--text);
+  font-weight: 700; cursor: pointer; font-size: 15px;
+}
+.gf-upgrade-btn:hover:not(:disabled) { background: #252C36; }
+.gf-upgrade-btn:disabled { opacity: .3; cursor: not-allowed; }
+
+.gf-actions { display: flex; gap: 10px; margin-top: 14px; }
+.gf-actions .btn { flex: 1; }
+
+.gf-final-panel {
+  text-align: center; padding: 22px 16px; border-radius: var(--r-lg);
+  background: linear-gradient(160deg, rgba(46,139,87,.18), rgba(242,201,76,.1));
+  border: 1px solid rgba(242,201,76,.4); margin-bottom: 12px;
+}
+.gf-final-panel h2 { font-size: 20px; margin-bottom: 8px; }
+.gf-final-panel p { color: var(--text-dim); font-size: 14px; margin-bottom: 16px; }
+.gf-final-panel .btn { max-width: 280px; margin: 0 auto; }
+
+.gf-log { display: flex; flex-direction: column; gap: 8px; max-height: 360px; overflow-y: auto; }
+.gf-log-item { font-size: 13px; line-height: 1.5; padding: 9px 11px; border-radius: 9px; background: var(--surface-2); border-left: 3px solid var(--edge-lit); }
+.gf-log-item.win { border-left-color: #6FCF97; }
+.gf-log-item.loss { border-left-color: #FF6B6B; }
+.gf-log-item.draw { border-left-color: var(--text-dim); }
+.gf-log-item.motm { border-left-color: var(--gold); color: #FFE6A0; }
+.gf-log-item.promo { border-left-color: var(--signal); color: #B7F0CE; font-weight: 600; }
+.gf-log-item.trophy { border-left-color: var(--gold); background: rgba(242,201,76,.1); color: #FFE6A0; font-weight: 700; }
+.gf-log-item.final { border-left-color: var(--signal); font-weight: 600; }
+.gf-log-item.train { border-left-color: #6FCF97; color: var(--text-dim); }
+
+.gf-setup h1 { font-size: 28px; margin-bottom: 10px; }
+.gf-setup p.dim { margin-bottom: 20px; font-size: 15px; }
+
+.gf-tp {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: var(--font-mono); font-size: 13px;
+  background: var(--surface-2); border: 1px solid var(--edge); border-radius: 999px;
+  padding: 4px 10px;
+}
+
+/* ================= Match Day ================= */
+
+.gf-match-overlay {
+  position: fixed; inset: 0; z-index: 100;
+  background: radial-gradient(ellipse at top, #182338 0%, #0A0D12 75%);
+  display: flex; align-items: center; justify-content: center;
+  padding: 14px; overflow-y: auto;
+}
+.gf-match-card {
+  width: 100%; max-width: 480px; background: var(--surface);
+  border: 1px solid var(--edge); border-radius: var(--r-lg);
+  overflow: hidden; box-shadow: 0 30px 80px -20px rgba(0,0,0,.7);
+}
+.gf-match-head { padding: 14px 18px 10px; text-align: center; }
+.gf-match-tier {
+  font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--gold); font-weight: 700; margin-bottom: 6px;
+}
+.gf-match-vs { display: flex; align-items: center; justify-content: center; gap: 10px; font-family: var(--font-display); }
+.gf-match-vs .team { font-weight: 800; font-size: 17px; }
+.gf-match-vs .vs { color: var(--text-dim); font-size: 13px; font-weight: 600; }
+
+.gf-pitch {
+  position: relative; margin: 0 14px 14px; border-radius: var(--r);
+  overflow: hidden; min-height: 280px;
+  background: linear-gradient(160deg, #1B5E3A, #0F3D26);
+  border: 1px solid rgba(255,255,255,.08);
+  display: flex; flex-direction: column; justify-content: center;
+  padding-top: 62px;
+}
+.gf-pitch-stripes {
+  position: absolute; inset: 0;
+  background: repeating-linear-gradient(100deg, rgba(255,255,255,.035) 0 40px, transparent 40px 80px);
+  pointer-events: none;
+}
+.gf-goal {
+  position: absolute; top: 14px; left: 50%; transform: translateX(-50%);
+  width: 92px; height: 46px;
+  border-left: 5px solid rgba(255,255,255,.75);
+  border-right: 5px solid rgba(255,255,255,.75);
+  border-top: 5px solid rgba(255,255,255,.75);
+  border-radius: 2px 2px 0 0;
+  opacity: .85;
+}
+.gf-card-inner { position: relative; z-index: 2; padding: 14px; }
+
+.gf-throwin { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 5; }
+.gf-throwin-text {
+  font-family: var(--font-display); font-weight: 800; font-size: 30px;
+  color: #fff; text-shadow: 0 4px 20px rgba(0,0,0,.6);
+  animation: gf-throwin-pop .9s ease forwards;
+}
+@keyframes gf-throwin-pop {
+  0% { transform: scale(.4); opacity: 0; }
+  30% { transform: scale(1.15); opacity: 1; }
+  60% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(1); opacity: 0; }
+}
+
+.gf-challenge { text-align: center; }
+.gf-challenge-label {
+  font-size: 13px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
+  color: #fff; margin-bottom: 10px; text-shadow: 0 2px 8px rgba(0,0,0,.5);
+}
+.gf-challenge-label span { display: block; font-size: 11px; color: var(--gold); font-weight: 700; margin-top: 2px; }
+
+.gf-timing-track {
+  position: relative; height: 40px; border-radius: 999px;
+  background: rgba(0,0,0,.35); border: 1px solid rgba(255,255,255,.15);
+  margin-bottom: 14px; overflow: visible;
+}
+.gf-zone { position: absolute; top: 0; bottom: 0; border-radius: 999px; }
+.gf-zone.good { background: rgba(242,201,76,.18); }
+.gf-zone.great { background: rgba(111,207,151,.35); }
+.gf-zone.perfect { background: rgba(111,207,151,.85); box-shadow: 0 0 14px rgba(111,207,151,.6); }
+.gf-timing-marker {
+  position: absolute; top: 50%; font-size: 26px; line-height: 1;
+  transform: translate(-50%, -50%); transition: none;
+  filter: drop-shadow(0 3px 6px rgba(0,0,0,.5));
+}
+.gf-timing-marker.locked { transition: transform .15s ease; }
+.gf-timing-marker.r-perfect { transform: translate(-50%, -50%) scale(1.4); }
+.gf-timing-marker.r-miss { transform: translate(-50%, -50%) scale(.85); filter: grayscale(1) drop-shadow(0 3px 6px rgba(0,0,0,.5)); }
+
+.gf-strike-btn { max-width: 260px; margin: 0 auto; white-space: nowrap; }
+.gf-key-hint {
+  font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+  padding: 2px 7px; border-radius: 5px; background: rgba(0,0,0,.22); border: 1px solid rgba(255,255,255,.25);
+}
+@media (hover: none) { .gf-key-hint { display: none; } }
+
+.gf-challenge.resolved .gf-timing-track,
+.gf-challenge.resolved .gf-strike-btn { opacity: .35; pointer-events: none; }
+
+.gf-rating-pop {
+  margin-top: 10px; font-family: var(--font-display); font-weight: 800; font-size: 20px;
+  animation: gf-pop .55s ease forwards;
+}
+.gf-rating-pop.r-perfect, .gf-rating-pop.r-great { color: #6FCF97; }
+.gf-rating-pop.r-good { color: var(--gold); }
+.gf-rating-pop.r-miss { color: #FF6B6B; }
+@keyframes gf-pop {
+  0% { transform: scale(.6); opacity: 0; }
+  40% { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.gf-moment-flash {
+  position: absolute; inset: 0; z-index: 4;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display); font-weight: 800;
+  font-size: 30px; text-align: center; padding: 0 20px;
+  color: #fff; text-shadow: 0 4px 24px rgba(0,0,0,.7);
+  background: rgba(0,0,0,.25);
+  animation: gf-moment-flash 1.05s ease forwards;
+  pointer-events: none;
+}
+.gf-moment-flash.good { color: #8CF0B6; }
+.gf-moment-flash.bad { color: #FF8A8A; }
+@keyframes gf-moment-flash {
+  0% { opacity: 0; transform: scale(.7); }
+  15% { opacity: 1; transform: scale(1.08); }
+  30% { transform: scale(1); }
+  80% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.shake-good { animation: gf-shake-good .4s ease; }
+.shake-bad { animation: gf-shake-bad .4s ease; }
+@keyframes gf-shake-good {
+  0%, 100% { transform: translateX(0); }
+  30% { transform: translateX(-4px); }
+  60% { transform: translateX(4px); }
+}
+@keyframes gf-shake-bad {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-8px); }
+  40% { transform: translateX(8px); }
+  60% { transform: translateX(-6px); }
+  80% { transform: translateX(6px); }
+}
+
+.gf-moment-ticker { padding: 10px 18px 18px; display: flex; flex-direction: column; gap: 6px; min-height: 20px; }
+.gf-ticker-line {
+  font-size: 12.5px; color: var(--text-dim); line-height: 1.4;
+  animation: gf-ticker-in .3s ease;
+}
+@keyframes gf-ticker-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ---------- Full time summary ---------- */
+.gf-fulltime { padding: 30px 22px; text-align: center; }
+.gf-fulltime-label {
+  font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--text-dim); font-weight: 700; margin-bottom: 10px;
+}
+.gf-score-final {
+  font-family: var(--font-mono); font-size: 26px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 14px; flex-wrap: wrap;
+}
+.gf-score-final small { font-size: 14px; color: var(--text-dim); }
+.gf-result-banner {
+  display: block; width: fit-content; margin: 0 auto 14px;
+  font-family: var(--font-display); font-weight: 800;
+  font-size: 22px; padding: 6px 22px; border-radius: 999px;
+}
+.gf-result-banner.win { background: rgba(111,207,151,.15); color: #6FCF97; }
+.gf-result-banner.draw { background: rgba(138,147,162,.15); color: var(--text-dim); }
+.gf-result-banner.loss { background: rgba(255,107,107,.15); color: #FF6B6B; }
+.gf-motm-banner {
+  font-weight: 700; font-size: 14px; color: var(--gold); margin-bottom: 10px;
+  animation: gf-motm-shimmer 1.8s ease infinite;
+}
+.gf-motm-banner.gold { font-size: 16px; }
+@keyframes gf-motm-shimmer { 0%, 100% { opacity: .85; } 50% { opacity: 1; text-shadow: 0 0 12px rgba(242,201,76,.6); } }
+.gf-fulltime .btn { display: flex; max-width: 280px; margin: 18px auto 0; }
+
+.gf-rewards {
+  display: flex; justify-content: center; gap: 10px; margin-top: 16px; flex-wrap: wrap;
+}
+.gf-reward {
+  background: var(--surface-2); border: 1px solid var(--edge); border-radius: var(--r);
+  padding: 8px 14px; min-width: 88px;
+}
+.gf-reward .n { font-family: var(--font-mono); font-size: 17px; font-weight: 700; color: #6FCF97; }
+.gf-reward .l { font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-dim); margin-top: 2px; }
+
+.gf-skill-index { margin-bottom: 12px; }
+.gf-skill-index .l { font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 5px; }
+.gf-skill-index .gf-bar-track { max-width: 260px; margin: 0 auto; }
+
+.gf-confetti-canvas { position: fixed; inset: 0; z-index: 200; pointer-events: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .gf-match-card, .gf-throwin-text, .gf-moment-flash, .gf-rating-pop,
+  .shake-good, .shake-bad, .gf-motm-banner { animation: none !important; }
+}
+
+/* Single-file build: system faces only — no network requests. */
+:root {
+  --font-display: ui-sans-serif, system-ui, -apple-system, "Segoe UI Variable Display", "Segoe UI", Roboto, sans-serif;
+  --font-body:    ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono:    ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+}
+
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+// GAA Career — game data & pure logic.
+// No DOM access here: every function takes the current save-state and
+// returns a brand new state (plus log entries). app.js owns rendering.
+
+(function () {
+  const COUNTIES = [
+    "Antrim", "Armagh", "Carlow", "Cavan", "Clare", "Cork", "Derry", "Donegal",
+    "Down", "Dublin", "Fermanagh", "Galway", "Kerry", "Kildare", "Kilkenny",
+    "Laois", "Leitrim", "Limerick", "Longford", "Louth", "Mayo", "Meath",
+    "Monaghan", "Offaly", "Roscommon", "Sligo", "Tipperary", "Tyrone",
+    "Waterford", "Westmeath", "Wexford", "Wicklow",
+  ];
+
+  const ATTRS = [
+    { key: "kicking", label: "Kicking" },
+    { key: "fielding", label: "High Fielding" },
+    { key: "tackling", label: "Tackling" },
+    { key: "speed", label: "Pace" },
+    { key: "strength", label: "Physicality" },
+    { key: "stamina", label: "Stamina" },
+    { key: "freeTaking", label: "Free-Taking" },
+  ];
+
+  // Career path from junior club football up to the inter-county game.
+  // oppBase / minOverall scale up each tier; repNeeded is the progress
+  // needed at that tier before a promotion is offered.
+  const TIERS = [
+    { key: "jb", label: "Junior B Championship", level: "Club", oppBase: 28, minOverall: 28, repNeeded: 16,
+      promo: "Your club's Junior B side won promotion — you've earned a step up to Junior A!" },
+    { key: "ja", label: "Junior A Championship", level: "Club", oppBase: 36, minOverall: 36, repNeeded: 18,
+      promo: "Junior A silverware in the bag. The club chairman wants you in the Intermediate team next year." },
+    { key: "im", label: "Intermediate Championship", level: "Club", oppBase: 45, minOverall: 45, repNeeded: 20,
+      promo: "Intermediate Championship conquered — you're stepping up to the club's Senior team." },
+    { key: "sr", label: "Senior Championship", level: "Club", oppBase: 54, minOverall: 54, repNeeded: 22,
+      promo: "A standout Senior campaign has caught the county selectors' eye — you've been called into the county development panel!" },
+    { key: "cp", label: "County Development Panel", level: "County", oppBase: 60, minOverall: 60, repNeeded: 24,
+      promo: "The county manager has promoted you onto the senior Championship panel!" },
+    { key: "cs", label: "County Senior Panel", level: "County", oppBase: 66, minOverall: 65, repNeeded: 26,
+      promo: "You've nailed down a starting jersey and driven the county deep into the Championship!" },
+    { key: "ai", label: "All-Ireland Series", level: "County", oppBase: 72, minOverall: 70, repNeeded: 28,
+      promo: "Croke Park, here you come — you've reached the All-Ireland Final!" },
+    { key: "aif", label: "All-Ireland Final", level: "Croke Park", oppBase: 78, minOverall: 72, repNeeded: Infinity,
+      promo: null },
+  ];
+
+  const FINAL_TIER_INDEX = TIERS.length - 1;
+  const DEFENDING_TIER_INDEX = TIERS.length - 2; // All-Ireland Series — where a new season restarts
+
+  function randInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+
+  function cryptoId() {
+    return Math.random().toString(36).slice(2) + Date.now().toString(36);
+  }
+
+  function computeOverall(attributes) {
+    const total = ATTRS.reduce((sum, a) => sum + attributes[a.key], 0);
+    return Math.round(total / ATTRS.length);
+  }
+
+  function upgradeCost(value) {
+    if (value >= 99) return Infinity;
+    return 1 + Math.floor(value / 25);
+  }
+
+  function createCareer({ name, county, club }) {
+    const attributes = {};
+    ATTRS.forEach((a) => {
+      attributes[a.key] = randInt(32, 42);
+    });
+    const cleanName = (name || "").trim() || "New Player";
+    const cleanClub = (club || "").trim() || `${county} Gaels`;
+    return {
+      name: cleanName,
+      county,
+      club: cleanClub,
+      attributes,
+      trainingPoints: 5,
+      energy: 100,
+      tierIndex: 0,
+      reputation: 0,
+      readyForFinal: false,
+      season: 1,
+      week: 1,
+      career: {
+        matches: 0,
+        wins: 0,
+        draws: 0,
+        losses: 0,
+        motm: 0,
+        allIrelandFinals: 0,
+        allIrelands: 0,
+        allStars: 0,
+      },
+      log: [
+        { id: cryptoId(), type: "info", text: `${cleanName} laced up for ${cleanClub}'s Junior B side. The journey to Croke Park starts here.` },
+      ],
+    };
+  }
+
+  function genScoreline(strength) {
+    const total = Math.max(3, Math.round(strength / 4) + randInt(-4, 5));
+    const maxGoals = Math.min(3, Math.floor(total / 6));
+    const goals = maxGoals > 0 ? randInt(0, maxGoals) : 0;
+    const points = Math.max(0, total - goals * 3);
+    return { goals, points, total: goals * 3 + points };
+  }
+
+  function scoreString(s) {
+    return `${s.goals}-${String(s.points).padStart(2, "0")}`;
+  }
+
+  function pushLog(events, entry) {
+    events.push({ id: cryptoId(), ...entry });
+  }
+
+  function withLog(state, events) {
+    const log = [...events.reverse(), ...state.log].slice(0, 30);
+    return { ...state, log };
+  }
+
+  function upgradeAttribute(state, key) {
+    const value = state.attributes[key];
+    const cost = upgradeCost(value);
+    if (!Number.isFinite(cost) || state.trainingPoints < cost) return state;
+    const attrLabel = (ATTRS.find((a) => a.key === key) || {}).label || key;
+    const events = [];
+    pushLog(events, { type: "train", text: `Training pays off — ${attrLabel} improved to ${value + 1}.` });
+    return withLog(
+      {
+        ...state,
+        trainingPoints: state.trainingPoints - cost,
+        attributes: { ...state.attributes, [key]: value + 1 },
+      },
+      events
+    );
+  }
+
+  function restUp(state) {
+    const events = [];
+    const energy = Math.min(100, state.energy + 45);
+    pushLog(events, { type: "info", text: "A quiet week off — you rested up and recovered energy." });
+    return withLog({ ...state, energy, week: state.week + 1 }, events);
+  }
+
+  // Turns the mini-game ratings captured during a match (see match.js) into
+  // concrete score deltas and an overall 0-100 skillIndex. Defaults to a
+  // neutral, skill-less contribution so playMatch/playAllIrelandFinal still
+  // work (e.g. under test) if called without a mini-game sequence.
+  function resolvePlayerEvents(events) {
+    if (!events || !events.length) {
+      return { yourBonus: { goals: 0, points: 0 }, oppBonus: { goals: 0, points: 0 }, skillIndex: 50 };
+    }
+    let yourGoals = 0, yourPoints = 0, oppGoals = 0, oppPoints = 0;
+    events.forEach((ev) => {
+      if (ev.type === "shot") {
+        if (ev.score >= 85) {
+          if (Math.random() < 0.35) yourGoals += 1;
+          else yourPoints += 1;
+        } else if (ev.score >= 60) {
+          yourPoints += 1;
+        } else if (ev.score >= 35) {
+          /* wide — no score */
+        } else if (Math.random() < 0.3) {
+          oppPoints += 1; // blocked and turned over into a rival score
+        }
+      } else if (ev.type === "catch") {
+        if (ev.score >= 60 && Math.random() < 0.4) yourPoints += 1;
+        else if (ev.score < 35 && Math.random() < 0.35) oppPoints += 1;
+      } else if (ev.type === "tackle") {
+        if (ev.score < 35 && Math.random() < 0.5) oppPoints += 1;
+      }
+    });
+    const skillIndex = Math.round(events.reduce((sum, ev) => sum + ev.score, 0) / events.length);
+    return {
+      yourBonus: { goals: yourGoals, points: yourPoints },
+      oppBonus: { goals: oppGoals, points: oppPoints },
+      skillIndex,
+    };
+  }
+
+  function playMatch(state, contribution) {
+    if (state.readyForFinal) return state;
+    const { yourBonus, oppBonus, skillIndex } = contribution || resolvePlayerEvents(null);
+    const tier = TIERS[state.tierIndex];
+    const overall = computeOverall(state.attributes);
+    const fatiguePenalty = state.energy < 30 ? 8 : 0;
+    const yourStrength = overall - fatiguePenalty + randInt(-6, 6);
+    const oppStrength = tier.oppBase + randInt(-8, 8);
+
+    const yourScore = genScoreline(yourStrength);
+    yourScore.goals += yourBonus.goals;
+    yourScore.points += yourBonus.points;
+    yourScore.total = yourScore.goals * 3 + yourScore.points;
+
+    const oppScore = genScoreline(oppStrength);
+    oppScore.goals += oppBonus.goals;
+    oppScore.points += oppBonus.points;
+    oppScore.total = oppScore.goals * 3 + oppScore.points;
+
+    let result;
+    if (yourScore.total > oppScore.total) result = "win";
+    else if (yourScore.total < oppScore.total) result = "loss";
+    else result = "draw";
+
+    const margin = yourScore.total - oppScore.total;
+    const motmChance = 0.12 + Math.max(0, skillIndex - 50) / 150 + (margin >= 6 ? 0.15 : 0);
+    const motm = result === "win" && Math.random() < motmChance;
+
+    const skillMult = 0.7 + skillIndex / 100;
+    const scaling = (1 + state.tierIndex * 0.15) * skillMult;
+    const trainingPointsEarned = Math.round(
+      (2 + (result === "win" ? 3 : result === "draw" ? 1 : 0) + (motm ? 2 : 0)) * scaling
+    );
+    const repEarned = Math.round(
+      ((result === "win" ? 4 : result === "draw" ? 1 : 0) + (motm ? 2 : 0)) * scaling
+    );
+
+    const events = [];
+    const rivalNames = ["Gaels", "O'Connells", "Emmets", "Rovers", "Sarsfields", "Parnells", "St. Brigid's", "Shamrocks"];
+    const rival = rivalNames[randInt(0, rivalNames.length - 1)];
+
+    const verb = result === "win" ? "defeated" : result === "loss" ? "lost to" : "drew with";
+    pushLog(events, {
+      type: result === "win" ? "win" : result === "loss" ? "loss" : "draw",
+      text: `${tier.label}: ${state.club} ${scoreString(yourScore)} (${yourScore.total}) ${verb} ${rival} ${scoreString(oppScore)} (${oppScore.total}).`,
+    });
+    if (motm) {
+      pushLog(events, { type: "motm", text: "Man of the Match! The papers are talking about you." });
+    }
+
+    let newState = {
+      ...state,
+      energy: Math.max(0, state.energy - 15),
+      trainingPoints: state.trainingPoints + trainingPointsEarned,
+      reputation: state.reputation + repEarned,
+      career: {
+        ...state.career,
+        matches: state.career.matches + 1,
+        wins: state.career.wins + (result === "win" ? 1 : 0),
+        draws: state.career.draws + (result === "draw" ? 1 : 0),
+        losses: state.career.losses + (result === "loss" ? 1 : 0),
+        motm: state.career.motm + (motm ? 1 : 0),
+      },
+    };
+
+    const overallAfter = computeOverall(newState.attributes);
+    if (newState.reputation >= tier.repNeeded) {
+      if (overallAfter < tier.minOverall) {
+        newState.reputation = tier.repNeeded - 1;
+        pushLog(events, {
+          type: "info",
+          text: `The selectors like your form but want a more complete player — build your overall rating to ${tier.minOverall} for the step up.`,
+        });
+      } else if (state.tierIndex === FINAL_TIER_INDEX - 1) {
+        newState = { ...newState, tierIndex: state.tierIndex + 1, reputation: 0, readyForFinal: true };
+        pushLog(events, { type: "trophy", text: tier.promo });
+      } else if (state.tierIndex < FINAL_TIER_INDEX - 1) {
+        newState = { ...newState, tierIndex: state.tierIndex + 1, reputation: 0 };
+        pushLog(events, { type: "promo", text: tier.promo });
+      }
+    }
+
+    newState.lastMatchSummary = {
+      tierLabel: tier.label,
+      club: state.club,
+      rival,
+      yourScore,
+      oppScore,
+      result,
+      motm,
+      trainingPointsEarned,
+      repEarned,
+      promoted: newState.tierIndex !== state.tierIndex,
+      readyForFinal: newState.readyForFinal,
+    };
+
+    return withLog(newState, events);
+  }
+
+  function playAllIrelandFinal(state, contribution) {
+    if (!state.readyForFinal) return state;
+    const { yourBonus, oppBonus, skillIndex } = contribution || resolvePlayerEvents(null);
+    const overall = computeOverall(state.attributes);
+    const events = [];
+
+    const simulate = () => {
+      const yourScore = genScoreline(overall + randInt(-8, 10));
+      yourScore.goals += yourBonus.goals;
+      yourScore.points += yourBonus.points;
+      yourScore.total = yourScore.goals * 3 + yourScore.points;
+      const oppScore = genScoreline(78 + randInt(-8, 12));
+      oppScore.goals += oppBonus.goals;
+      oppScore.points += oppBonus.points;
+      oppScore.total = oppScore.goals * 3 + oppScore.points;
+      return { yourScore, oppScore };
+    };
+
+    let { yourScore, oppScore } = simulate();
+    let replay = false;
+    if (yourScore.total === oppScore.total) {
+      replay = true;
+      ({ yourScore, oppScore } = simulate());
+      if (yourScore.total === oppScore.total) yourScore.total += 1; // sudden-death tiebreak
+    }
+
+    const win = yourScore.total > oppScore.total;
+    const margin = yourScore.total - oppScore.total;
+    const motmChance = 0.2 + Math.max(0, skillIndex - 50) / 130 + (margin >= 5 ? 0.15 : 0);
+    const motm = win && Math.random() < motmChance;
+
+    pushLog(events, {
+      type: "final",
+      text: `ALL-IRELAND FINAL${replay ? " (after a replay)" : ""}: ${state.county} ${scoreString(yourScore)} (${yourScore.total}) v ${scoreString(oppScore)} (${oppScore.total}).`,
+    });
+
+    if (win) {
+      pushLog(events, { type: "trophy", text: `SAM MAGUIRE IS COMING HOME! ${state.county} are All-Ireland Champions and you were on the field for every minute of it.` });
+    } else {
+      pushLog(events, { type: "loss", text: `Heartbreak in Croke Park — ${state.county} come up short. There's always next year.` });
+    }
+    if (motm) {
+      pushLog(events, { type: "motm", text: "Man of the Match in an All-Ireland Final. Legendary stuff." });
+    }
+
+    const skillAllStarBoost = skillIndex >= 80 ? 0.15 : skillIndex >= 60 ? 0.07 : 0;
+    const allStarChance = Math.min(0.7, Math.max(0.05, (overall - 55) / 70 + (motm ? 0.2 : 0) + (win ? 0.1 : 0) + skillAllStarBoost));
+    const wonAllStar = Math.random() < allStarChance;
+    if (wonAllStar) {
+      pushLog(events, { type: "trophy", text: `AN ALL STAR! Your performances this Championship have been recognised with an All Star award.` });
+    } else {
+      pushLog(events, { type: "info", text: "No All Star this season — but the selectors are watching." });
+    }
+
+    const trainingPointsEarned = 12 + (win ? 6 : 0) + (motm ? 4 : 0);
+
+    const newCareer = {
+      ...state.career,
+      allIrelandFinals: state.career.allIrelandFinals + 1,
+      allIrelands: state.career.allIrelands + (win ? 1 : 0),
+      allStars: state.career.allStars + (wonAllStar ? 1 : 0),
+      motm: state.career.motm + (motm ? 1 : 0),
+    };
+
+    pushLog(events, { type: "info", text: `Season ${state.season} complete. Back to training for another Championship campaign.` });
+
+    return withLog(
+      {
+        ...state,
+        readyForFinal: false,
+        tierIndex: DEFENDING_TIER_INDEX,
+        reputation: 8,
+        energy: Math.max(0, state.energy - 25),
+        trainingPoints: state.trainingPoints + trainingPointsEarned,
+        season: state.season + 1,
+        career: newCareer,
+        lastFinalSummary: {
+          county: state.county,
+          yourScore,
+          oppScore,
+          replay,
+          win,
+          motm,
+          wonAllStar,
+          trainingPointsEarned,
+        },
+      },
+      events
+    );
+  }
+
+  window.GaaCareer = {
+    COUNTIES,
+    ATTRS,
+    TIERS,
+    computeOverall,
+    upgradeCost,
+    createCareer,
+    upgradeAttribute,
+    restUp,
+    playMatch,
+    playAllIrelandFinal,
+    resolvePlayerEvents,
+    scoreString,
+  };
+})();
+
+</script>
+<script>
+// GAA Career — tiny procedural sound effects via WebAudio.
+// No audio files: everything here is a couple of oscillators/noise bursts.
+// Safe to call from anywhere; silently no-ops if WebAudio is unavailable
+// or the context hasn't been unlocked by a user gesture yet.
+
+(function () {
+  let ctx = null;
+
+  function getCtx() {
+    if (ctx) return ctx;
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return null;
+    ctx = new Ctx();
+    return ctx;
+  }
+
+  function unlock() {
+    const c = getCtx();
+    if (c && c.state === "suspended") c.resume();
+  }
+
+  function tone(freq, start, dur, { type = "sine", gain = 0.18, glideTo = null } = {}) {
+    const c = getCtx();
+    if (!c) return;
+    const osc = c.createOscillator();
+    const g = c.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, c.currentTime + start);
+    if (glideTo) osc.frequency.linearRampToValueAtTime(glideTo, c.currentTime + start + dur);
+    g.gain.setValueAtTime(0, c.currentTime + start);
+    g.gain.linearRampToValueAtTime(gain, c.currentTime + start + 0.015);
+    g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + start + dur);
+    osc.connect(g).connect(c.destination);
+    osc.start(c.currentTime + start);
+    osc.stop(c.currentTime + start + dur + 0.02);
+  }
+
+  function noiseBurst(start, dur, { gain = 0.15, filterFreq = 1800 } = {}) {
+    const c = getCtx();
+    if (!c) return;
+    const bufferSize = Math.floor(c.sampleRate * dur);
+    const buffer = c.createBuffer(1, bufferSize, c.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+    const src = c.createBufferSource();
+    src.buffer = buffer;
+    const filter = c.createBiquadFilter();
+    filter.type = "bandpass";
+    filter.frequency.value = filterFreq;
+    const g = c.createGain();
+    g.gain.setValueAtTime(0, c.currentTime + start);
+    g.gain.linearRampToValueAtTime(gain, c.currentTime + start + 0.03);
+    g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + start + dur);
+    src.connect(filter).connect(g).connect(c.destination);
+    src.start(c.currentTime + start);
+  }
+
+  const SFX = {
+    unlock,
+    whistle() {
+      tone(2200, 0, 0.16, { type: "square", gain: 0.1 });
+      tone(2200, 0.2, 0.28, { type: "square", gain: 0.1 });
+    },
+    tick() {
+      tone(900, 0, 0.05, { type: "square", gain: 0.06 });
+    },
+    kick() {
+      tone(140, 0, 0.12, { type: "triangle", gain: 0.22, glideTo: 60 });
+      noiseBurst(0, 0.08, { gain: 0.1, filterFreq: 2500 });
+    },
+    perfect() {
+      tone(880, 0, 0.1, { type: "sine", gain: 0.16 });
+      tone(1320, 0.09, 0.14, { type: "sine", gain: 0.16 });
+      tone(1760, 0.18, 0.22, { type: "sine", gain: 0.16 });
+    },
+    miss() {
+      tone(220, 0, 0.28, { type: "sawtooth", gain: 0.12, glideTo: 110 });
+    },
+    cheer() {
+      noiseBurst(0, 0.9, { gain: 0.14, filterFreq: 1400 });
+      tone(220, 0, 0.6, { type: "sine", gain: 0.08, glideTo: 260 });
+    },
+    trophy() {
+      [523, 659, 784, 1047].forEach((f, i) => tone(f, i * 0.13, 0.3, { type: "sine", gain: 0.15 }));
+    },
+  };
+
+  window.GaaAudio = SFX;
+})();
+
+</script>
+<script>
+// GAA Career — a tiny canvas confetti burst, no external libraries.
+
+(function () {
+  const COLORS = ["#F2C94C", "#2E8B57", "#6FCF97", "#EDF0F4", "#C06B31"];
+
+  function burst({ duration = 2200, particleCount = 140 } = {}) {
+    const canvas = document.createElement("canvas");
+    canvas.className = "gf-confetti-canvas";
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    document.body.appendChild(canvas);
+    const ctx = canvas.getContext("2d");
+
+    const particles = [];
+    for (let i = 0; i < particleCount; i++) {
+      particles.push({
+        x: Math.random() * canvas.width,
+        y: -20 - Math.random() * canvas.height * 0.4,
+        w: 6 + Math.random() * 6,
+        h: 8 + Math.random() * 8,
+        color: COLORS[Math.floor(Math.random() * COLORS.length)],
+        vy: 2 + Math.random() * 3,
+        vx: -1.5 + Math.random() * 3,
+        rot: Math.random() * Math.PI,
+        vr: -0.2 + Math.random() * 0.4,
+      });
+    }
+
+    const start = performance.now();
+    function frame(now) {
+      const elapsed = now - start;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particles.forEach((p) => {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.rot += p.vr;
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rot);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+        ctx.restore();
+      });
+      if (elapsed < duration) {
+        requestAnimationFrame(frame);
+      } else {
+        canvas.remove();
+      }
+    }
+    requestAnimationFrame(frame);
+  }
+
+  window.GaaConfetti = { burst };
+})();
+
+</script>
+<script>
+// GAA Career — Match Day engine. Renders a full-screen sequence of
+// timing-based skill challenges (shooting, high-fielding, tackling),
+// then hands the resulting contribution to data.js to resolve the match.
+
+(function () {
+  const A = window.GaaAudio;
+  const C = window.GaaConfetti;
+
+  function clamp(v, min, max) {
+    return Math.max(min, Math.min(max, v));
+  }
+  function randInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+  function shuffle(arr) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = randInt(0, i);
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  const RATING_LABELS = { perfect: "PERFECT!", great: "GREAT!", good: "OK", miss: "MISS!" };
+
+  function classify(dist, zoneWidthPct) {
+    const perfectHalf = zoneWidthPct * 0.35;
+    const greatHalf = zoneWidthPct;
+    const goodHalf = zoneWidthPct * 1.9;
+    if (dist <= perfectHalf) return { rating: "perfect", score: Math.round(100 - (dist / Math.max(perfectHalf, 0.001)) * 6) };
+    if (dist <= greatHalf) return { rating: "great", score: Math.round(90 - ((dist - perfectHalf) / (greatHalf - perfectHalf)) * 18) };
+    if (dist <= goodHalf) return { rating: "good", score: Math.round(64 - ((dist - greatHalf) / (goodHalf - greatHalf)) * 26) };
+    return { rating: "miss", score: Math.max(4, Math.round(28 - (dist - goodHalf))) };
+  }
+
+  /**
+   * Runs a single timing challenge inside the given card element.
+   * Resolves with { rating, score }.
+   */
+  function runTimingChallenge({ card, label, sub, zoneWidthPct, periodMs, timeoutMs = 3200 }) {
+    return new Promise((resolve) => {
+      const zoneCenterPct = 22 + Math.random() * 56;
+      const perfectHalf = zoneWidthPct * 0.35;
+      const greatHalf = zoneWidthPct;
+      const goodHalf = zoneWidthPct * 1.9;
+
+      const wrap = document.createElement("div");
+      wrap.className = "gf-challenge";
+      wrap.innerHTML = `
+        <div class="gf-challenge-label">${label}${sub ? `<span>${sub}</span>` : ""}</div>
+        <div class="gf-timing-track">
+          <div class="gf-zone good" style="left:${clamp(zoneCenterPct - goodHalf, 0, 100)}%;width:${goodHalf * 2}%"></div>
+          <div class="gf-zone great" style="left:${clamp(zoneCenterPct - greatHalf, 0, 100)}%;width:${greatHalf * 2}%"></div>
+          <div class="gf-zone perfect" style="left:${clamp(zoneCenterPct - perfectHalf, 0, 100)}%;width:${perfectHalf * 2}%"></div>
+          <div class="gf-timing-marker">⚽</div>
+        </div>
+        <button class="btn btn-primary gf-strike-btn">STRIKE!<span class="gf-key-hint">space</span></button>
+      `;
+      card.appendChild(wrap);
+
+      const marker = wrap.querySelector(".gf-timing-marker");
+      const strikeBtn = wrap.querySelector(".gf-strike-btn");
+      const start = performance.now();
+      let raf = null;
+      let done = false;
+
+      // Travel is inset to 3–97% so the marker never half-overflows the track.
+      function tick(now) {
+        const t = now - start;
+        const pos = 50 + 47 * Math.sin((2 * Math.PI * t) / periodMs);
+        marker.style.left = pos + "%";
+        if (!done) raf = requestAnimationFrame(tick);
+      }
+      raf = requestAnimationFrame(tick);
+
+      const timeout = setTimeout(() => finish(true), timeoutMs);
+
+      function finish(timedOut) {
+        if (done) return;
+        done = true;
+        clearTimeout(timeout);
+        cancelAnimationFrame(raf);
+        document.removeEventListener("keydown", onKey);
+        strikeBtn.disabled = true;
+
+        const pos = parseFloat(marker.style.left) || 50;
+        const dist = Math.abs(pos - zoneCenterPct);
+        const result = timedOut ? { rating: "miss", score: 8 } : classify(dist, zoneWidthPct);
+
+        marker.classList.add("locked", `r-${result.rating}`);
+        wrap.classList.add("resolved");
+        if (result.rating === "perfect") { A.perfect(); flashShake(card, "good"); }
+        else if (result.rating === "miss") { A.miss(); flashShake(card, "bad"); }
+        else A.tick();
+
+        const ratingTag = document.createElement("div");
+        ratingTag.className = `gf-rating-pop r-${result.rating}`;
+        ratingTag.textContent = RATING_LABELS[result.rating];
+        wrap.appendChild(ratingTag);
+
+        setTimeout(() => {
+          wrap.remove();
+          resolve(result);
+        }, 550);
+      }
+
+      function onKey(e) {
+        if (e.code === "Space") {
+          e.preventDefault();
+          finish(false);
+        }
+      }
+      document.addEventListener("keydown", onKey);
+      strikeBtn.addEventListener("click", () => finish(false));
+    });
+  }
+
+  function flashShake(card, kind) {
+    card.classList.remove("shake-good", "shake-bad");
+    void card.offsetWidth; // restart animation
+    card.classList.add(kind === "good" ? "shake-good" : "shake-bad");
+  }
+
+  function difficultyFor(state, attrKey, speedBase) {
+    const attrVal = state.attributes[attrKey];
+    const zoneWidthPct = clamp(7 + attrVal * 0.17, 7, 24);
+    let speed = speedBase * (1 + state.tierIndex * 0.09);
+    if (state.energy < 30) speed *= 1.2;
+    return { zoneWidthPct, periodMs: 1000 / speed };
+  }
+
+  async function runShotEvent(card, state, momentTicker) {
+    const power = difficultyFor(state, "kicking", 0.8);
+    const powerResult = await runTimingChallenge({ card, label: "SHOT AT GOAL", sub: "POWER", ...power });
+    const place = difficultyFor(state, "freeTaking", 0.95);
+    const placeResult = await runTimingChallenge({ card, label: "SHOT AT GOAL", sub: "PLACEMENT", ...place });
+    const score = Math.round((powerResult.score + placeResult.score) / 2);
+    let text, log;
+    if (score >= 85) {
+      const goal = Math.random() < 0.35;
+      text = goal ? "GOAL!!! 🥅" : "PERFECT — POINT!";
+      log = goal ? "You buried it in the net — GOAL!" : "Clinical finish — over the bar for a point.";
+    } else if (score >= 60) {
+      text = "POINT!";
+      log = "Good strike, splits the posts for a point.";
+    } else if (score >= 35) {
+      text = "WIDE!";
+      log = "Dragged it wide — no score.";
+    } else {
+      text = "BLOCKED DOWN!";
+      log = "Charged down and turned over — dangerous.";
+    }
+    showMoment(card, text, score >= 60 ? "good" : "bad");
+    logMoment(momentTicker, log);
+    return { type: "shot", score };
+  }
+
+  async function runCatchEvent(card, state, momentTicker) {
+    const diff = difficultyFor(state, "fielding", 1.05);
+    const result = await runTimingChallenge({ card, label: "HIGH BALL IN — TIME YOUR JUMP", ...diff });
+    let text, log;
+    if (result.score >= 70) { text = "CLEAN CATCH!"; log = "Fielded it clean at full stretch — great possession won."; }
+    else if (result.score >= 40) { text = "SECURED"; log = "Scrappy, but you came away with it."; }
+    else { text = "SPILLED IT!"; log = "Dropped under the dropping ball — turned over."; }
+    showMoment(card, text, result.score >= 40 ? "good" : "bad");
+    logMoment(momentTicker, log);
+    return { type: "catch", score: result.score };
+  }
+
+  async function runTackleEvent(card, state, momentTicker) {
+    const diff = difficultyFor(state, "tackling", 1.25);
+    const result = await runTimingChallenge({ card, label: "TIME YOUR HIT", ...diff });
+    let text, log;
+    if (result.score >= 70) { text = "TURNOVER WON!"; log = "Textbook tackle — won the ball back clean."; }
+    else if (result.score >= 40) { text = "SLOWED THEM DOWN"; log = "Not pretty, but you got a hand in and slowed the attack."; }
+    else { text = "BEATEN!"; log = "Missed the tackle — big scoring chance for the opposition."; }
+    showMoment(card, text, result.score >= 40 ? "good" : "bad");
+    logMoment(momentTicker, log);
+    return { type: "tackle", score: result.score };
+  }
+
+  function showMoment(card, text, kind) {
+    const el = document.createElement("div");
+    el.className = `gf-moment-flash ${kind === "good" ? "good" : "bad"}`;
+    el.textContent = text;
+    card.appendChild(el);
+    setTimeout(() => el.remove(), 1100);
+  }
+
+  function logMoment(ticker, text) {
+    const line = document.createElement("div");
+    line.className = "gf-ticker-line";
+    line.textContent = text;
+    ticker.prepend(line);
+    while (ticker.children.length > 4) ticker.removeChild(ticker.lastChild);
+  }
+
+  function buildOverlay(state, isFinal, G) {
+    const tier = G.TIERS[state.tierIndex];
+    const overlay = document.createElement("div");
+    overlay.className = "gf-match-overlay";
+    overlay.innerHTML = `
+      <div class="gf-match-card">
+        <div class="gf-match-head">
+          <div class="gf-match-tier">${isFinal ? "ALL-IRELAND FINAL · CROKE PARK" : tier.label.toUpperCase()}</div>
+          <div class="gf-match-vs">
+            <span class="team you">${state.club || state.county}</span>
+            <span class="vs">v</span>
+            <span class="team rival" id="gf-rival-name">Opponents</span>
+          </div>
+        </div>
+        <div class="gf-pitch">
+          <div class="gf-pitch-stripes"></div>
+          <div class="gf-goal"></div>
+          <div class="gf-card-inner"></div>
+        </div>
+        <div class="gf-moment-ticker"></div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+    return overlay;
+  }
+
+  async function playIntro(pitchEl) {
+    const intro = document.createElement("div");
+    intro.className = "gf-throwin";
+    intro.innerHTML = `<div class="gf-throwin-text">THROW IN!</div>`;
+    pitchEl.appendChild(intro);
+    A.whistle();
+    await new Promise((r) => setTimeout(r, 900));
+    intro.remove();
+  }
+
+  function renderFullTime(overlay, { isFinal, summary, skillIndex, G, onContinue }) {
+    const card = overlay.querySelector(".gf-match-card");
+    const you = summary.yourScore;
+    const opp = summary.oppScore;
+    const win = isFinal ? summary.win : summary.result === "win";
+    const draw = !isFinal && summary.result === "draw";
+
+    if (win) A.cheer();
+    const trophyMoment = isFinal ? summary.win || summary.wonAllStar : summary.promoted;
+    if (trophyMoment) {
+      A.trophy();
+      C.burst({});
+    }
+
+    card.innerHTML = `
+      <div class="gf-fulltime">
+        <div class="gf-fulltime-label">FULL TIME</div>
+        <div class="gf-score-final">
+          <span>${G.scoreString(you)} <small>(${you.total})</small></span>
+          <span class="dim">—</span>
+          <span>${G.scoreString(opp)} <small>(${opp.total})</small></span>
+        </div>
+        <div class="gf-result-banner ${win ? "win" : draw ? "draw" : "loss"}">
+          ${win ? (isFinal ? "CHAMPIONS!" : "WIN") : draw ? "DRAW" : "DEFEAT"}
+        </div>
+        ${summary.motm ? `<div class="gf-motm-banner">⭐ MAN OF THE MATCH</div>` : ""}
+        ${isFinal && summary.wonAllStar ? `<div class="gf-motm-banner gold">🏆 ALL STAR AWARDED</div>` : ""}
+        ${!isFinal && summary.promoted ? `<div class="gf-motm-banner gold">🎉 PROMOTED!</div>` : ""}
+        ${!isFinal && summary.readyForFinal ? `<div class="gf-motm-banner gold">🏟️ ALL-IRELAND FINAL AWAITS!</div>` : ""}
+        <div class="gf-skill-index">
+          <div class="l">Your performance rating — ${skillIndex}</div>
+          <div class="gf-bar-track"><div class="gf-bar-fill" style="width:${skillIndex}%"></div></div>
+        </div>
+        <div class="gf-rewards">
+          <div class="gf-reward"><div class="n">+${summary.trainingPointsEarned}</div><div class="l">Training pts</div></div>
+          ${!isFinal ? `<div class="gf-reward"><div class="n">+${summary.repEarned}</div><div class="l">Reputation</div></div>` : ""}
+        </div>
+        <button class="btn btn-primary" data-action="match-continue">Continue</button>
+      </div>
+    `;
+    card.querySelector('[data-action="match-continue"]').addEventListener("click", () => {
+      overlay.remove();
+      onContinue();
+    });
+  }
+
+  async function start(state, G, isFinal, onComplete) {
+    A.unlock();
+    const overlay = buildOverlay(state, isFinal, G);
+    const pitchEl = overlay.querySelector(".gf-pitch");
+    const cardInner = overlay.querySelector(".gf-card-inner");
+    const ticker = overlay.querySelector(".gf-moment-ticker");
+    const rivalNames = ["Gaels", "O'Connells", "Emmets", "Rovers", "Sarsfields", "Parnells", "St. Brigid's", "Shamrocks"];
+    overlay.querySelector("#gf-rival-name").textContent = isFinal
+      ? "Rival County"
+      : rivalNames[randInt(0, rivalNames.length - 1)];
+
+    await playIntro(pitchEl);
+
+    const plan = shuffle(["catch", "tackle", "shot"]);
+    plan.push(["shot", "catch", "tackle"][randInt(0, 2)]);
+    if (isFinal) plan.push(["shot", "catch", "tackle"][randInt(0, 2)], "shot");
+
+    const events = [];
+    for (const kind of plan) {
+      let ev;
+      if (kind === "shot") ev = await runShotEvent(cardInner, state, ticker);
+      else if (kind === "catch") ev = await runCatchEvent(cardInner, state, ticker);
+      else ev = await runTackleEvent(cardInner, state, ticker);
+      events.push(ev);
+      await new Promise((r) => setTimeout(r, 260));
+    }
+
+    const contribution = G.resolvePlayerEvents(events);
+    let newState;
+    let summary;
+    if (isFinal) {
+      newState = G.playAllIrelandFinal(state, contribution);
+      summary = newState.lastFinalSummary;
+    } else {
+      newState = G.playMatch(state, contribution);
+      summary = newState.lastMatchSummary;
+    }
+
+    renderFullTime(overlay, {
+      isFinal,
+      summary,
+      skillIndex: contribution.skillIndex,
+      G,
+      onContinue: () => onComplete(newState),
+    });
+  }
+
+  window.GaaMatch = { start };
+})();
+
+</script>
+<script>
+// GAA Career — rendering & save/load. Talks to window.GaaCareer for all
+// game logic; this file only turns state into HTML and wires up clicks.
+
+(function () {
+  const SAVE_KEY = "gaa-career-save-v1";
+  const G = window.GaaCareer;
+  const app = document.getElementById("app");
+
+  let state = load();
+
+  function load() {
+    try {
+      const raw = localStorage.getItem(SAVE_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function save() {
+    try {
+      localStorage.setItem(SAVE_KEY, JSON.stringify(state));
+    } catch (e) {
+      /* storage unavailable — game still works, just won't persist */
+    }
+  }
+
+  function setState(next) {
+    state = next;
+    save();
+    render();
+  }
+
+  function esc(str) {
+    const div = document.createElement("div");
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  // ---------- Setup screen ----------
+
+  function renderSetup() {
+    const options = G.COUNTIES.map((c) => `<option value="${c}">${c}</option>`).join("");
+    app.innerHTML = `
+      <div class="gf-wrap gf-setup">
+        <h1>GAA Career</h1>
+        <p class="dim">Start out with your club's Junior B side and work your way up — Junior A, Intermediate,
+          Senior, the county panel, and eventually a shot at the All-Ireland and an All Star. Train up your
+          attributes, play matches, and climb the ladder.</p>
+        <div class="panel">
+          <div class="field">
+            <label for="f-name">Player name</label>
+            <input id="f-name" type="text" placeholder="e.g. Cian Walsh" maxlength="30" />
+          </div>
+          <div class="field">
+            <label for="f-county">County</label>
+            <select id="f-county">${options}</select>
+          </div>
+          <div class="field">
+            <label for="f-club">Club name</label>
+            <input id="f-club" type="text" placeholder="e.g. St. Brigid's" maxlength="30" />
+          </div>
+          <button class="btn btn-primary" data-action="start" style="margin-top:6px">Start Career</button>
+        </div>
+      </div>
+    `;
+  }
+
+  // ---------- Game screen ----------
+
+  function tierLadderHtml() {
+    return G.TIERS.map((tier, i) => {
+      let cls = "gf-ladder-step";
+      if (i < state.tierIndex) cls += " done";
+      else if (i === state.tierIndex) cls += " current";
+      return `<div class="${cls}"><span class="dot"></span>${esc(tier.label)}</div>`;
+    }).join("");
+  }
+
+  function attrsHtml() {
+    return G.ATTRS.map((a) => {
+      const value = state.attributes[a.key];
+      const cost = G.upgradeCost(value);
+      const affordable = state.trainingPoints >= cost && Number.isFinite(cost);
+      return `
+        <div class="gf-attr">
+          <div class="gf-attr-head">
+            <span class="name">${esc(a.label)}</span>
+            <span class="val">${value}/99</span>
+          </div>
+          <div class="gf-attr-row">
+            <div class="gf-bar-track"><div class="gf-bar-fill" style="width:${value}%"></div></div>
+            <button class="gf-upgrade-btn" data-action="upgrade" data-key="${a.key}"
+              ${affordable ? "" : "disabled"} title="Spend ${Number.isFinite(cost) ? cost : "—"} training pts">+</button>
+          </div>
+        </div>
+      `;
+    }).join("");
+  }
+
+  function logHtml() {
+    return state.log
+      .map((entry) => `<div class="gf-log-item ${entry.type}">${esc(entry.text)}</div>`)
+      .join("");
+  }
+
+  function actionOrFinalHtml() {
+    if (state.readyForFinal) {
+      return `
+        <div class="gf-final-panel">
+          <h2>🏆 All-Ireland Final Day</h2>
+          <p>${esc(state.county)} have reached Croke Park. Throw-in is minutes away.</p>
+          <button class="btn btn-primary" data-action="final">Play the Final</button>
+        </div>
+      `;
+    }
+    const tier = G.TIERS[state.tierIndex];
+    const repPct = Math.min(100, Math.round((state.reputation / tier.repNeeded) * 100));
+    const canPlay = state.energy >= 15;
+    return `
+      <div class="panel">
+        <div class="gf-row-between">
+          <span class="k">${esc(tier.label)} <span class="dim">· ${esc(tier.level)}</span></span>
+          <span class="v">${state.reputation}/${tier.repNeeded} rep</span>
+        </div>
+        <div class="gf-bar-track"><div class="gf-bar-fill" style="width:${repPct}%"></div></div>
+        <div class="gf-ladder">${tierLadderHtml()}</div>
+      </div>
+      <div class="panel">
+        <div class="gf-row-between">
+          <span class="k">Energy</span>
+          <span class="v">${state.energy}/100</span>
+        </div>
+        <div class="gf-bar-track"><div class="gf-bar-fill energy ${state.energy < 30 ? "low" : ""}" style="width:${state.energy}%"></div></div>
+        <div class="gf-actions">
+          <button class="btn btn-primary" data-action="match" ${canPlay ? "" : "disabled"}>${canPlay ? "Play Match" : "Need energy"}</button>
+          <button class="btn" data-action="rest">Rest</button>
+        </div>
+      </div>
+    `;
+  }
+
+  function render() {
+    if (!state) {
+      renderSetup();
+      wireSetup();
+      return;
+    }
+
+    const overall = G.computeOverall(state.attributes);
+    const c = state.career;
+
+    app.innerHTML = `
+      <div class="gf-wrap">
+        <div class="gf-header">
+          <div>
+            <div class="gf-title">${esc(state.name)}</div>
+            <div class="gf-sub">${esc(state.club)} · ${esc(state.county)} · Season ${state.season} · Overall ${overall}</div>
+          </div>
+          <button class="btn btn-quiet btn-sm" data-action="reset">Reset</button>
+        </div>
+
+        <div class="gf-trophies">
+          <div class="gf-trophy"><div class="n">${c.allIrelands}</div><div class="l">All-Irelands</div></div>
+          <div class="gf-trophy"><div class="n">${c.allStars}</div><div class="l">All Stars</div></div>
+          <div class="gf-trophy"><div class="n">${c.wins}/${c.matches}</div><div class="l">Career W/P</div></div>
+        </div>
+
+        ${actionOrFinalHtml()}
+
+        <div class="panel">
+          <div class="gf-row-between">
+            <span class="k">Attributes</span>
+            <span class="gf-tp">⚡ ${state.trainingPoints} training pts</span>
+          </div>
+          ${attrsHtml()}
+        </div>
+
+        <div class="panel">
+          <div class="gf-row-between"><span class="k">Match News</span></div>
+          <div class="gf-log">${logHtml()}</div>
+        </div>
+      </div>
+    `;
+
+    wireGame();
+  }
+
+  // ---------- Event wiring ----------
+
+  function wireSetup() {
+    app.querySelector('[data-action="start"]').addEventListener("click", () => {
+      const name = document.getElementById("f-name").value;
+      const county = document.getElementById("f-county").value;
+      const club = document.getElementById("f-club").value;
+      setState(G.createCareer({ name, county, club }));
+    });
+  }
+
+  function wireGame() {
+    const matchBtn = app.querySelector('[data-action="match"]');
+    if (matchBtn) matchBtn.addEventListener("click", () => window.GaaMatch.start(state, G, false, setState));
+
+    const restBtn = app.querySelector('[data-action="rest"]');
+    if (restBtn) restBtn.addEventListener("click", () => setState(G.restUp(state)));
+
+    const finalBtn = app.querySelector('[data-action="final"]');
+    if (finalBtn) finalBtn.addEventListener("click", () => window.GaaMatch.start(state, G, true, setState));
+
+    app.querySelectorAll('[data-action="upgrade"]').forEach((btn) => {
+      btn.addEventListener("click", () => setState(G.upgradeAttribute(state, btn.dataset.key)));
+    });
+
+    const resetBtn = app.querySelector('[data-action="reset"]');
+    if (resetBtn) {
+      resetBtn.addEventListener("click", () => {
+        if (confirm("Retire this player and start a brand new career? This cannot be undone.")) {
+          localStorage.removeItem(SAVE_KEY);
+          setState(null);
+        }
+      });
+    }
+  }
+
+  render();
+})();
+
+</script>
+</body>
+</html>

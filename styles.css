@@ -3,6 +3,12 @@
 @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
 
 :root {
+  /* Font stacks live in tokens so build.js can swap them for system faces
+     in the single-file build, where a font CDN may be blocked. */
+  --font-display: 'Bricolage Grotesque', ui-sans-serif, system-ui, sans-serif;
+  --font-body:    Inter, ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono:    'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+
   --bg:        #0E1116;
   --surface:   #161A21;
   --surface-2: #1E242D;
@@ -22,7 +28,7 @@
 html, body { margin: 0; padding: 0; background: var(--bg); }
 body {
   color: var(--text);
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, sans-serif;
+  font-family: var(--font-body);
   font-size: 16px; line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   padding-top: env(safe-area-inset-top);
@@ -30,7 +36,7 @@ body {
 }
 
 h1, h2 {
-  font-family: 'Bricolage Grotesque', Inter, sans-serif;
+  font-family: var(--font-display);
   font-weight: 800; letter-spacing: -0.03em; line-height: 1.05; margin: 0;
 }
 
@@ -82,12 +88,12 @@ input:focus, select:focus {
 .gf-wrap { max-width: 640px; margin: 0 auto; padding: 20px 16px 60px; }
 
 .gf-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 14px; }
-.gf-title { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 22px; letter-spacing: -0.02em; }
+.gf-title { font-family: var(--font-display); font-weight: 800; font-size: 22px; letter-spacing: -0.02em; }
 .gf-sub { color: var(--text-dim); font-size: 13px; margin-top: 2px; }
 
 .gf-trophies { display: flex; gap: 10px; margin-bottom: 14px; }
 .gf-trophy { flex: 1; background: var(--surface); border: 1px solid var(--edge); border-radius: var(--r); padding: 10px 12px; text-align: center; }
-.gf-trophy .n { font-family: 'JetBrains Mono', monospace; font-size: 20px; font-weight: 700; color: var(--gold); }
+.gf-trophy .n { font-family: var(--font-mono); font-size: 20px; font-weight: 700; color: var(--gold); }
 .gf-trophy .l { font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-dim); margin-top: 2px; }
 
 .gf-bar-track { background: var(--surface-2); border-radius: 999px; height: 10px; overflow: hidden; border: 1px solid var(--edge); }
@@ -97,7 +103,7 @@ input:focus, select:focus {
 
 .gf-row-between { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
 .gf-row-between .k { font-size: 13px; font-weight: 600; }
-.gf-row-between .v { font-size: 12px; color: var(--text-dim); font-family: 'JetBrains Mono', monospace; }
+.gf-row-between .v { font-size: 12px; color: var(--text-dim); font-family: var(--font-mono); }
 
 .gf-ladder { display: flex; flex-direction: column; gap: 4px; margin-top: 12px; }
 .gf-ladder-step { display: flex; align-items: center; gap: 8px; font-size: 12px; padding: 5px 8px; border-radius: 8px; color: var(--text-dim); }
@@ -111,7 +117,7 @@ input:focus, select:focus {
 .gf-attr:last-child { margin-bottom: 0; }
 .gf-attr-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
 .gf-attr-head .name { font-size: 13px; font-weight: 600; }
-.gf-attr-head .val { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--text-dim); }
+.gf-attr-head .val { font-family: var(--font-mono); font-size: 13px; color: var(--text-dim); }
 .gf-attr-row { display: flex; align-items: center; gap: 8px; }
 .gf-attr-row .gf-bar-track { flex: 1; height: 8px; }
 .gf-upgrade-btn {
@@ -150,7 +156,7 @@ input:focus, select:focus {
 
 .gf-tp {
   display: inline-flex; align-items: center; gap: 6px;
-  font-family: 'JetBrains Mono', monospace; font-size: 13px;
+  font-family: var(--font-mono); font-size: 13px;
   background: var(--surface-2); border: 1px solid var(--edge); border-radius: 999px;
   padding: 4px 10px;
 }
@@ -173,7 +179,7 @@ input:focus, select:focus {
   font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
   color: var(--gold); font-weight: 700; margin-bottom: 6px;
 }
-.gf-match-vs { display: flex; align-items: center; justify-content: center; gap: 10px; font-family: 'Bricolage Grotesque', sans-serif; }
+.gf-match-vs { display: flex; align-items: center; justify-content: center; gap: 10px; font-family: var(--font-display); }
 .gf-match-vs .team { font-weight: 800; font-size: 17px; }
 .gf-match-vs .vs { color: var(--text-dim); font-size: 13px; font-weight: 600; }
 
@@ -203,7 +209,7 @@ input:focus, select:focus {
 
 .gf-throwin { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 5; }
 .gf-throwin-text {
-  font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 30px;
+  font-family: var(--font-display); font-weight: 800; font-size: 30px;
   color: #fff; text-shadow: 0 4px 20px rgba(0,0,0,.6);
   animation: gf-throwin-pop .9s ease forwards;
 }
@@ -250,7 +256,7 @@ input:focus, select:focus {
 .gf-challenge.resolved .gf-strike-btn { opacity: .35; pointer-events: none; }
 
 .gf-rating-pop {
-  margin-top: 10px; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 20px;
+  margin-top: 10px; font-family: var(--font-display); font-weight: 800; font-size: 20px;
   animation: gf-pop .55s ease forwards;
 }
 .gf-rating-pop.r-perfect, .gf-rating-pop.r-great { color: #6FCF97; }
@@ -265,7 +271,7 @@ input:focus, select:focus {
 .gf-moment-flash {
   position: absolute; inset: 0; z-index: 4;
   display: flex; align-items: center; justify-content: center;
-  font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800;
+  font-family: var(--font-display); font-weight: 800;
   font-size: 30px; text-align: center; padding: 0 20px;
   color: #fff; text-shadow: 0 4px 24px rgba(0,0,0,.7);
   background: rgba(0,0,0,.25);
@@ -310,13 +316,13 @@ input:focus, select:focus {
   font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--text-dim); font-weight: 700; margin-bottom: 10px;
 }
 .gf-score-final {
-  font-family: 'JetBrains Mono', monospace; font-size: 26px; font-weight: 700;
+  font-family: var(--font-mono); font-size: 26px; font-weight: 700;
   display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 14px; flex-wrap: wrap;
 }
 .gf-score-final small { font-size: 14px; color: var(--text-dim); }
 .gf-result-banner {
   display: block; width: fit-content; margin: 0 auto 14px;
-  font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800;
+  font-family: var(--font-display); font-weight: 800;
   font-size: 22px; padding: 6px 22px; border-radius: 999px;
 }
 .gf-result-banner.win { background: rgba(111,207,151,.15); color: #6FCF97; }
@@ -337,7 +343,7 @@ input:focus, select:focus {
   background: var(--surface-2); border: 1px solid var(--edge); border-radius: var(--r);
   padding: 8px 14px; min-width: 88px;
 }
-.gf-reward .n { font-family: 'JetBrains Mono', monospace; font-size: 17px; font-weight: 700; color: #6FCF97; }
+.gf-reward .n { font-family: var(--font-mono); font-size: 17px; font-weight: 700; color: #6FCF97; }
 .gf-reward .l { font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-dim); margin-top: 2px; }
 
 .gf-skill-index { margin-bottom: 12px; }
