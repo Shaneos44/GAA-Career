@@ -174,7 +174,8 @@ ALSO IN THERE
 · 16 achievements
 · Career records and a full match-news feed
 
-No ads. No in-app purchases. No account. Works completely offline.
+Free, with no ads and no in-app purchases. No account, no tracking,
+no internet needed — it works completely offline.
 ```
 
 **Keywords (iOS, 100 chars)**
