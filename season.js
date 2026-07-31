@@ -1,4 +1,4 @@
-// GAA Career — season structure: a 10-game divisional league (double
+// Gaelic Hero — season structure: a 10-game divisional league (double
 // round-robin between six teams), then a knockout championship.
 //
 // Promotion is earned only by winning your division. Finishing bottom

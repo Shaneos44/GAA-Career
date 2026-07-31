@@ -1,4 +1,4 @@
-// GAA Career — native shell integration.
+// Gaelic Hero — native shell integration.
 //
 // Everything here is optional: on the plain web the Capacitor globals simply
 // aren't there and every call short-circuits, so the same bundle runs as a

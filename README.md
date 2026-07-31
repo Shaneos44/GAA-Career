@@ -1,4 +1,4 @@
-# GAA Career
+# Gaelic Hero
 
 A skill-based Gaelic football career game. Start out at your club's Junior B
 side and work your way up to a county jersey, an All-Ireland, and an All Star.
@@ -72,7 +72,7 @@ Progress saves automatically to your browser.
 
 ## Playing it
 
-**Easiest — one file.** Download just `gaa-career.html` and open it. The whole
+**Easiest — one file.** Download just `gaelic-hero.html` and open it. The whole
 game is bundled into that single self-contained file: no other downloads, no
 network access needed.
 
@@ -81,7 +81,7 @@ standalone, portrait, and fully playable offline via its service worker.
 
 **Or host it.** Turn on GitHub Pages (Settings → Pages → Source: *Deploy from
 a branch* → `main` / `root`) and play at
-`https://<user>.github.io/GAA-Career/`.
+`https://<user>.github.io/GaelicHero/`.
 
 **Or run it from source:**
 
@@ -93,7 +93,7 @@ then visit `http://localhost:8080`.
 
 ### Rebuilding
 
-`gaa-career.html` and everything in `www/` are generated. After editing any
+`gaelic-hero.html` and everything in `www/` are generated. After editing any
 source file:
 
 ```
@@ -128,7 +128,7 @@ and app ID (the ID is permanent after your first upload).
 - `audio.js` / `confetti.js` — procedural sound effects and celebrations
 - `styles.css` — mobile-first styling
 - `native.js` — Capacitor integration (splash, status bar, Android back button); no-ops on the web
-- `build.js` → `gaa-career.html` + `www/` — bundle, PWA manifest, service worker, privacy policy
+- `build.js` → `gaelic-hero.html` + `www/` — bundle, PWA manifest, service worker, privacy policy
 - `tools/make-assets.py` → `assets/`, `www/icons/` — procedurally drawn app icon and splash art
 - `capacitor.config.json`, `android/`, `ios/` — the native shells
 - `STORE.md` — app store submission guide

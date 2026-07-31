@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generates the app icon and splash art for GAA Career.
+"""Generates the app icon and splash art for Gaelic Hero.
 
 Draws everything procedurally so the artwork is reproducible and versioned as
 code rather than as opaque binaries. Run after changing the brand colours:

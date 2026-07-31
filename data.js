@@ -1,4 +1,4 @@
-// GAA Career — game data & pure logic.
+// Gaelic Hero — game data & pure logic.
 // No DOM access here: every function takes the current save-state and
 // returns a brand new state (plus log entries). app.js owns rendering.
 

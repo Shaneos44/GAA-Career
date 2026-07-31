@@ -1,58 +1,39 @@
-# Shipping GAA Career to the App Store and Google Play
+# Shipping Gaelic Hero to the App Store and Google Play
 
 The project is configured and both native projects are scaffolded and syncing.
 What is left needs your hardware and your developer accounts.
 
 ---
 
-## ⚠️ Read this before you submit: the app name
+## Naming — settled
 
-Not legal advice — but worth understanding before you upload, because the app
-ID cannot be changed afterwards.
+The app is **Gaelic Hero**, ID **`ie.gaelichero.app`**. That resolves the one
+thing that was worth worrying about: nothing in the store listing, the name or
+the ID suggests an official GAA product any more.
 
-**The name "GAA Career" is the part worth thinking about.** The competition
-terminology mostly is not:
+Not legal advice, but for the record on where the remaining risk sits — it is
+low:
 
-- ***All-Ireland*** is geographic and descriptive, and ***All Star*** is
-  generic sports vocabulary used worldwide (NBA, MLB, and so on). Neither is
-  plausibly exclusive to the GAA, and I found no evidence either is
-  registered. Describing a fictional competition as an "All-Ireland" in a
-  Gaelic football game is ordinary descriptive use.
-- ***Sam Maguire*** and ***Tailteann Cup*** are more distinctive, but they name
-  a real trophy and a real competition; referring to them in a sports game is
-  much closer to nominative use than to passing yourself off as the GAA.
-- What the GAA actually registered and actively enforces is its **logo and the
-  county crests** — it took 35 successful actions in 2020, mostly against
-  merchandise carrying crests. **This game uses no crest, logo or badge**, which
-  is the single biggest thing in its favour.
+- The in-game terminology is deliberately kept. ***All-Ireland*** is geographic
+  and descriptive, ***All Star*** is generic sports vocabulary used worldwide
+  (NBA, MLB and so on), and no registration for either turned up. ***Sam
+  Maguire*** and the ***Tailteann Cup*** name a real trophy and a real
+  competition, which is nominative use, not passing off.
+- What the GAA actually registered and enforces is its **logo and the county
+  crests** — 35 successful actions in 2020, mostly against crested merchandise.
+  **This game uses no crest, logo or badge anywhere**, which is the single
+  biggest point in its favour. Keep it that way: do not add county colours as
+  crests, and do not use the GAA logo in screenshots or the listing.
+- County names are geographic and lower risk again.
 
-So the real question is not per-word infringement — it is whether the finished
-listing gives the impression of an **official GAA product**. "GAA Career" as a
-store name, with an app ID of `ie.gaacareer.game`, leans that way. The practical
-risk is not a courtroom: it is that both stores act on IP complaints
-administratively, and a rights holder's complaint can pull a live app down long
-before anyone argues the merits.
+**`ie.gaelichero.app` is permanent from your first upload.** Change it now if
+you would rather tie it to a domain you own — after that it is fixed for the
+life of the listing.
 
-Cheap ways to de-risk without gutting the game:
-
-| Consider changing | Why |
-|---|---|
-| App name **GAA Career** | The organisation's own initialism as your product name is what implies affiliation. *Gaelic Football Career*, *Parish to Province*, *The Championship* all read the same to a player. |
-| App ID `ie.gaacareer.game` | Same reasoning, and **this one is permanent after your first upload**. |
-
-Keep the in-game terminology if you want it — it is what makes the game feel
-real, and it is the weakest part of any complaint. County names are geographic
-and lower risk again.
-
-Either way, add a disclaimer to the store listing (it costs nothing and
-undercuts an affiliation claim directly):
+One free bit of belt-and-braces — put this in the store listing description:
 
 > Not affiliated with, endorsed by, or connected to the Gaelic Athletic
 > Association.
-
-If you want certainty rather than a judgement call, a short email to the GAA's
-commercial department asking about a fan-made, free, no-ads game is a cheaper
-answer than a takedown.
 
 Two smaller review risks worth knowing:
 
@@ -89,15 +70,19 @@ Two smaller review risks worth knowing:
 
 ---
 
-## 1. Set your identity first
+## 1. Identity (already set)
 
 Edit `capacitor.config.json`:
 
 ```json
-{ "appId": "ie.yourdomain.yourapp", "appName": "Your App Name" }
+{ "appId": "ie.gaelichero.app", "appName": "Gaelic Hero" }
 ```
 
-Then re-scaffold so the change reaches the native projects:
+This is already set. Only change it if you want the ID tied to a domain you
+own — and only before your first upload.
+
+If you do change it, re-scaffold so it reaches the native projects (then
+re-apply the SDK and orientation edits noted at the end of this file):
 
 ```bash
 rm -rf android ios
@@ -112,7 +97,7 @@ Set the contact address in `build.js` (`CONTACT`), then `npm run build`.
 
 Both stores require a **public URL**, not a file inside the app. The simplest
 route: enable GitHub Pages on this repo (Settings → Pages → `main` / `root`),
-which puts it at `https://<user>.github.io/GAA-Career/www/privacy.html`.
+which puts it at `https://<user>.github.io/GaelicHero/www/privacy.html`.
 
 ## 3. Android
 
@@ -150,7 +135,8 @@ cd ios/App && pod install
 ## Store listing copy
 
 **App name (30 chars max)**
-`GAA Career` — 10 chars. Rename per the warning above.
+`Gaelic Hero` — 11 chars, so it fits under a home-screen icon without
+truncating. No separate short label needed.
 
 **Subtitle / short description (30 / 80 chars)**
 `Junior B to the All-Ireland` (27)

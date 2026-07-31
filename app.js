@@ -1,4 +1,4 @@
-// GAA Career — UI shell. Renders the career screens and routes actions to
+// Gaelic Hero — UI shell. Renders the career screens and routes actions to
 // data.js / match.js. Mobile-first: a bottom tab bar, thumb-reachable
 // primary actions, and no hover-dependent affordances.
 
@@ -47,7 +47,7 @@
     app.innerHTML = `
       <div class="gf-wrap gf-setup">
         <div class="gf-crest">⚽</div>
-        <h1>GAA Career</h1>
+        <h1>Gaelic Hero</h1>
         <p class="dim">Ten league games a season. Win your division to go up,
           finish bottom and you go down. Then it's knockout championship
           football — all the way to Sam Maguire.</p>

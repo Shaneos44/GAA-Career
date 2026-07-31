@@ -1,4 +1,4 @@
-// GAA Career — the skill layer. Six distinct touch-first mini-games.
+// Gaelic Hero — the skill layer. Six distinct touch-first mini-games.
 //
 // Every game resolves to { score, rating } where score is 0-100, so match.js
 // can treat them interchangeably. All input is pointer-based (one code path

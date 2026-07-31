@@ -3,19 +3,19 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
-<title>GAA Career — Junior B to All-Ireland</title>
+<title>Gaelic Hero — Junior B to All-Ireland</title>
 <meta name="description" content="A skill-based Gaelic football career game. Win your division, survive the championship, and climb from Junior B club football to an All-Ireland and an All Star." />
 <meta name="theme-color" content="#0E1116" />
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
-<meta name="apple-mobile-web-app-title" content="GAA Career" />
+<meta name="apple-mobile-web-app-title" content="Gaelic Hero" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="format-detection" content="telephone=no" />
 <link rel="manifest" href="manifest.webmanifest" />
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
 <link rel="icon" href="icons/favicon-32.png" sizes="32x32" />
 <style>
-/* GAA Career — mobile-first. Designed for a phone in one hand: bottom tab
+/* Gaelic Hero — mobile-first. Designed for a phone in one hand: bottom tab
    bar, thumb-reachable primary actions, no hover-dependent affordances. */
 
 
@@ -603,7 +603,7 @@ input:focus, select:focus {
 <body>
 <div id="app"></div>
 <script>
-// GAA Career — season structure: a 10-game divisional league (double
+// Gaelic Hero — season structure: a 10-game divisional league (double
 // round-robin between six teams), then a knockout championship.
 //
 // Promotion is earned only by winning your division. Finishing bottom
@@ -833,7 +833,7 @@ input:focus, select:focus {
 
 </script>
 <script>
-// GAA Career — long-term goals: achievements and per-season objectives.
+// Gaelic Hero — long-term goals: achievements and per-season objectives.
 // Pure logic; data.js calls in after state changes.
 
 (function () {
@@ -883,7 +883,7 @@ input:focus, select:focus {
 
 </script>
 <script>
-// GAA Career — game data & pure logic.
+// Gaelic Hero — game data & pure logic.
 // No DOM access here: every function takes the current save-state and
 // returns a brand new state (plus log entries). app.js owns rendering.
 
@@ -1423,7 +1423,7 @@ input:focus, select:focus {
 
 </script>
 <script>
-// GAA Career — how-to-play content, shared by three places: the Guide tab,
+// Gaelic Hero — how-to-play content, shared by three places: the Guide tab,
 // the first-time coach card shown in-match, and practice mode.
 //
 // One source of truth, so an instruction never drifts from the game it
@@ -1537,7 +1537,7 @@ input:focus, select:focus {
 
 </script>
 <script>
-// GAA Career — tiny procedural sound effects via WebAudio.
+// Gaelic Hero — tiny procedural sound effects via WebAudio.
 // No audio files: everything here is a couple of oscillators/noise bursts.
 // Safe to call from anywhere; silently no-ops if WebAudio is unavailable
 // or the context hasn't been unlocked by a user gesture yet.
@@ -1633,7 +1633,7 @@ input:focus, select:focus {
 
 </script>
 <script>
-// GAA Career — a tiny canvas confetti burst, no external libraries.
+// Gaelic Hero — a tiny canvas confetti burst, no external libraries.
 
 (function () {
   const COLORS = ["#F2C94C", "#2E8B57", "#6FCF97", "#EDF0F4", "#C06B31"];
@@ -1690,7 +1690,7 @@ input:focus, select:focus {
 
 </script>
 <script>
-// GAA Career — the skill layer. Six distinct touch-first mini-games.
+// Gaelic Hero — the skill layer. Six distinct touch-first mini-games.
 //
 // Every game resolves to { score, rating } where score is 0-100, so match.js
 // can treat them interchangeably. All input is pointer-based (one code path
@@ -2127,7 +2127,7 @@ input:focus, select:focus {
 
 </script>
 <script>
-// GAA Career — Match Day. Builds a sequence of skill events weighted by the
+// Gaelic Hero — Match Day. Builds a sequence of skill events weighted by the
 // player's position, runs them through minigames.js, then hands the combined
 // contribution to data.js to resolve the fixture and advance the season.
 
@@ -2493,7 +2493,7 @@ input:focus, select:focus {
 
 </script>
 <script>
-// GAA Career — UI shell. Renders the career screens and routes actions to
+// Gaelic Hero — UI shell. Renders the career screens and routes actions to
 // data.js / match.js. Mobile-first: a bottom tab bar, thumb-reachable
 // primary actions, and no hover-dependent affordances.
 
@@ -2542,7 +2542,7 @@ input:focus, select:focus {
     app.innerHTML = `
       <div class="gf-wrap gf-setup">
         <div class="gf-crest">⚽</div>
-        <h1>GAA Career</h1>
+        <h1>Gaelic Hero</h1>
         <p class="dim">Ten league games a season. Win your division to go up,
           finish bottom and you go down. Then it's knockout championship
           football — all the way to Sam Maguire.</p>
@@ -2958,7 +2958,7 @@ input:focus, select:focus {
 
 </script>
 <script>
-// GAA Career — native shell integration.
+// Gaelic Hero — native shell integration.
 //
 // Everything here is optional: on the plain web the Capacitor globals simply
 // aren't there and every call short-circuits, so the same bundle runs as a

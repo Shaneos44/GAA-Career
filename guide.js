@@ -1,4 +1,4 @@
-// GAA Career — how-to-play content, shared by three places: the Guide tab,
+// Gaelic Hero — how-to-play content, shared by three places: the Guide tab,
 // the first-time coach card shown in-match, and practice mode.
 //
 // One source of truth, so an instruction never drifts from the game it

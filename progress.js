@@ -1,4 +1,4 @@
-// GAA Career — long-term goals: achievements and per-season objectives.
+// Gaelic Hero — long-term goals: achievements and per-season objectives.
 // Pure logic; data.js calls in after state changes.
 
 (function () {

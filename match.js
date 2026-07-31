@@ -1,4 +1,4 @@
-// GAA Career — Match Day. Builds a sequence of skill events weighted by the
+// Gaelic Hero — Match Day. Builds a sequence of skill events weighted by the
 // player's position, runs them through minigames.js, then hands the combined
 // contribution to data.js to resolve the fixture and advance the season.
 

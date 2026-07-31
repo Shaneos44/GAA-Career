@@ -1,4 +1,4 @@
-// GAA Career — tiny procedural sound effects via WebAudio.
+// Gaelic Hero — tiny procedural sound effects via WebAudio.
 // No audio files: everything here is a couple of oscillators/noise bursts.
 // Safe to call from anywhere; silently no-ops if WebAudio is unavailable
 // or the context hasn't been unlocked by a user gesture yet.

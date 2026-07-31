@@ -1,4 +1,4 @@
-package ie.gaacareer.game;
+package ie.gaelichero.app;
 
 import com.getcapacitor.BridgeActivity;
 

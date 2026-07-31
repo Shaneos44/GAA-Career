@@ -1,4 +1,4 @@
-// GAA Career — a tiny canvas confetti burst, no external libraries.
+// Gaelic Hero — a tiny canvas confetti burst, no external libraries.
 
 (function () {
   const COLORS = ["#F2C94C", "#2E8B57", "#6FCF97", "#EDF0F4", "#C06B31"];
