@@ -113,8 +113,8 @@ npm run assets       # regenerate every icon and splash from assets/
 ```
 
 **See [STORE.md](STORE.md) before submitting** — it covers signing, listing
-copy, the data-safety answers, screenshot sizes, and an important trademark
-issue with the current app name.
+copy, the data-safety answers, screenshot sizes, and a note on the app name
+and app ID (the ID is permanent after your first upload).
 
 ## Files
 

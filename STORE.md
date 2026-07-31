@@ -5,44 +5,54 @@ What is left needs your hardware and your developer accounts.
 
 ---
 
-## ⚠️ Read this before you submit: the name is a legal risk
+## ⚠️ Read this before you submit: the app name
 
-**"GAA" is a registered trademark of the Gaelic Athletic Association**, and so
-are most of the competition names this game currently uses. Right now the app
-ships as **GAA Career** and refers to the *All-Ireland*, *Sam Maguire*, *All
-Stars* and the *Tailteann Cup*.
+Not legal advice — but worth understanding before you upload, because the app
+ID cannot be changed afterwards.
 
-Both stores act on intellectual-property complaints:
+**The name "GAA Career" is the part worth thinking about.** The competition
+terminology mostly is not:
 
-- Apple **App Review Guideline 5.2.1** — apps using third-party trademarks
-  without permission are rejected.
-- Google Play **Impersonation and Intellectual Property** policy — same, and
-  Play also removes apps after launch on a rights-holder complaint.
+- ***All-Ireland*** is geographic and descriptive, and ***All Star*** is
+  generic sports vocabulary used worldwide (NBA, MLB, and so on). Neither is
+  plausibly exclusive to the GAA, and I found no evidence either is
+  registered. Describing a fictional competition as an "All-Ireland" in a
+  Gaelic football game is ordinary descriptive use.
+- ***Sam Maguire*** and ***Tailteann Cup*** are more distinctive, but they name
+  a real trophy and a real competition; referring to them in a sports game is
+  much closer to nominative use than to passing yourself off as the GAA.
+- What the GAA actually registered and actively enforces is its **logo and the
+  county crests** — it took 35 successful actions in 2020, mostly against
+  merchandise carrying crests. **This game uses no crest, logo or badge**, which
+  is the single biggest thing in its favour.
 
-The realistic outcomes are rejection at review, or — worse — approval followed
-by a takedown once someone at Croke Park notices. I have **not** renamed
-anything, because that is your call and you may already have permission or be
-willing to take the risk. But if you do not have written permission, change
-these before you submit:
+So the real question is not per-word infringement — it is whether the finished
+listing gives the impression of an **official GAA product**. "GAA Career" as a
+store name, with an app ID of `ie.gaacareer.game`, leans that way. The practical
+risk is not a courtroom: it is that both stores act on IP complaints
+administratively, and a rights holder's complaint can pull a live app down long
+before anyone argues the merits.
 
-| Currently | Safer |
+Cheap ways to de-risk without gutting the game:
+
+| Consider changing | Why |
 |---|---|
-| App name **GAA Career** | *Gaelic Football Career*, *Parish to Province*, *The Championship* |
-| App ID `ie.gaacareer.game` | something without `gaa`, e.g. `ie.yourdomain.gaelicfootball` |
-| *All-Ireland Championship* | *The National Championship* |
-| *Sam Maguire* | *the Cup* / *the big one* |
-| *All Star* | *Team of the Year* (the game already uses this phrasing in places) |
-| *Tailteann Cup* | *The Second Tier Cup* |
+| App name **GAA Career** | The organisation's own initialism as your product name is what implies affiliation. *Gaelic Football Career*, *Parish to Province*, *The Championship* all read the same to a player. |
+| App ID `ie.gaacareer.game` | Same reasoning, and **this one is permanent after your first upload**. |
 
-County names themselves are geographic and much lower risk.
+Keep the in-game terminology if you want it — it is what makes the game feel
+real, and it is the weakest part of any complaint. County names are geographic
+and lower risk again.
 
-Whatever you land on, add a disclaimer to the store listing and the Guide tab:
+Either way, add a disclaimer to the store listing (it costs nothing and
+undercuts an affiliation claim directly):
 
 > Not affiliated with, endorsed by, or connected to the Gaelic Athletic
 > Association.
 
-Changing the app ID **must** happen before your first upload — the ID is
-permanent once a build is submitted. The name can change later; the ID cannot.
+If you want certainty rather than a judgement call, a short email to the GAA's
+commercial department asking about a fan-made, free, no-ads game is a cheaper
+answer than a takedown.
 
 Two smaller review risks worth knowing:
 
