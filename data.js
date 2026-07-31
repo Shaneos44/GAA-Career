@@ -144,8 +144,45 @@
     return withLog({ ...state, energy, week: state.week + 1 }, events);
   }
 
-  function playMatch(state) {
+  // Turns the mini-game ratings captured during a match (see match.js) into
+  // concrete score deltas and an overall 0-100 skillIndex. Defaults to a
+  // neutral, skill-less contribution so playMatch/playAllIrelandFinal still
+  // work (e.g. under test) if called without a mini-game sequence.
+  function resolvePlayerEvents(events) {
+    if (!events || !events.length) {
+      return { yourBonus: { goals: 0, points: 0 }, oppBonus: { goals: 0, points: 0 }, skillIndex: 50 };
+    }
+    let yourGoals = 0, yourPoints = 0, oppGoals = 0, oppPoints = 0;
+    events.forEach((ev) => {
+      if (ev.type === "shot") {
+        if (ev.score >= 85) {
+          if (Math.random() < 0.35) yourGoals += 1;
+          else yourPoints += 1;
+        } else if (ev.score >= 60) {
+          yourPoints += 1;
+        } else if (ev.score >= 35) {
+          /* wide — no score */
+        } else if (Math.random() < 0.3) {
+          oppPoints += 1; // blocked and turned over into a rival score
+        }
+      } else if (ev.type === "catch") {
+        if (ev.score >= 60 && Math.random() < 0.4) yourPoints += 1;
+        else if (ev.score < 35 && Math.random() < 0.35) oppPoints += 1;
+      } else if (ev.type === "tackle") {
+        if (ev.score < 35 && Math.random() < 0.5) oppPoints += 1;
+      }
+    });
+    const skillIndex = Math.round(events.reduce((sum, ev) => sum + ev.score, 0) / events.length);
+    return {
+      yourBonus: { goals: yourGoals, points: yourPoints },
+      oppBonus: { goals: oppGoals, points: oppPoints },
+      skillIndex,
+    };
+  }
+
+  function playMatch(state, contribution) {
     if (state.readyForFinal) return state;
+    const { yourBonus, oppBonus, skillIndex } = contribution || resolvePlayerEvents(null);
     const tier = TIERS[state.tierIndex];
     const overall = computeOverall(state.attributes);
     const fatiguePenalty = state.energy < 30 ? 8 : 0;
@@ -153,7 +190,14 @@
     const oppStrength = tier.oppBase + randInt(-8, 8);
 
     const yourScore = genScoreline(yourStrength);
+    yourScore.goals += yourBonus.goals;
+    yourScore.points += yourBonus.points;
+    yourScore.total = yourScore.goals * 3 + yourScore.points;
+
     const oppScore = genScoreline(oppStrength);
+    oppScore.goals += oppBonus.goals;
+    oppScore.points += oppBonus.points;
+    oppScore.total = oppScore.goals * 3 + oppScore.points;
 
     let result;
     if (yourScore.total > oppScore.total) result = "win";
@@ -161,9 +205,11 @@
     else result = "draw";
 
     const margin = yourScore.total - oppScore.total;
-    const motm = result === "win" && margin >= 6 && Math.random() < 0.45;
+    const motmChance = 0.12 + Math.max(0, skillIndex - 50) / 150 + (margin >= 6 ? 0.15 : 0);
+    const motm = result === "win" && Math.random() < motmChance;
 
-    const scaling = 1 + state.tierIndex * 0.15;
+    const skillMult = 0.7 + skillIndex / 100;
+    const scaling = (1 + state.tierIndex * 0.15) * skillMult;
     const trainingPointsEarned = Math.round(
       (2 + (result === "win" ? 3 : result === "draw" ? 1 : 0) + (motm ? 2 : 0)) * scaling
     );
@@ -216,17 +262,38 @@
       }
     }
 
+    newState.lastMatchSummary = {
+      tierLabel: tier.label,
+      club: state.club,
+      rival,
+      yourScore,
+      oppScore,
+      result,
+      motm,
+      trainingPointsEarned,
+      repEarned,
+      promoted: newState.tierIndex !== state.tierIndex,
+      readyForFinal: newState.readyForFinal,
+    };
+
     return withLog(newState, events);
   }
 
-  function playAllIrelandFinal(state) {
+  function playAllIrelandFinal(state, contribution) {
     if (!state.readyForFinal) return state;
+    const { yourBonus, oppBonus, skillIndex } = contribution || resolvePlayerEvents(null);
     const overall = computeOverall(state.attributes);
     const events = [];
 
     const simulate = () => {
       const yourScore = genScoreline(overall + randInt(-8, 10));
+      yourScore.goals += yourBonus.goals;
+      yourScore.points += yourBonus.points;
+      yourScore.total = yourScore.goals * 3 + yourScore.points;
       const oppScore = genScoreline(78 + randInt(-8, 12));
+      oppScore.goals += oppBonus.goals;
+      oppScore.points += oppBonus.points;
+      oppScore.total = oppScore.goals * 3 + oppScore.points;
       return { yourScore, oppScore };
     };
 
@@ -240,7 +307,8 @@
 
     const win = yourScore.total > oppScore.total;
     const margin = yourScore.total - oppScore.total;
-    const motm = win && margin >= 5 && Math.random() < 0.5;
+    const motmChance = 0.2 + Math.max(0, skillIndex - 50) / 130 + (margin >= 5 ? 0.15 : 0);
+    const motm = win && Math.random() < motmChance;
 
     pushLog(events, {
       type: "final",
@@ -256,7 +324,8 @@
       pushLog(events, { type: "motm", text: "Man of the Match in an All-Ireland Final. Legendary stuff." });
     }
 
-    const allStarChance = Math.min(0.7, Math.max(0.05, (overall - 55) / 70 + (motm ? 0.2 : 0) + (win ? 0.1 : 0)));
+    const skillAllStarBoost = skillIndex >= 80 ? 0.15 : skillIndex >= 60 ? 0.07 : 0;
+    const allStarChance = Math.min(0.7, Math.max(0.05, (overall - 55) / 70 + (motm ? 0.2 : 0) + (win ? 0.1 : 0) + skillAllStarBoost));
     const wonAllStar = Math.random() < allStarChance;
     if (wonAllStar) {
       pushLog(events, { type: "trophy", text: `AN ALL STAR! Your performances this Championship have been recognised with an All Star award.` });
@@ -286,6 +355,16 @@
         trainingPoints: state.trainingPoints + trainingPointsEarned,
         season: state.season + 1,
         career: newCareer,
+        lastFinalSummary: {
+          county: state.county,
+          yourScore,
+          oppScore,
+          replay,
+          win,
+          motm,
+          wonAllStar,
+          trainingPointsEarned,
+        },
       },
       events
     );
@@ -302,5 +381,7 @@
     restUp,
     playMatch,
     playAllIrelandFinal,
+    resolvePlayerEvents,
+    scoreString,
   };
 })();

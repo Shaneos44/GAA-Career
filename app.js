@@ -199,13 +199,13 @@
 
   function wireGame() {
     const matchBtn = app.querySelector('[data-action="match"]');
-    if (matchBtn) matchBtn.addEventListener("click", () => setState(G.playMatch(state)));
+    if (matchBtn) matchBtn.addEventListener("click", () => window.GaaMatch.start(state, G, false, setState));
 
     const restBtn = app.querySelector('[data-action="rest"]');
     if (restBtn) restBtn.addEventListener("click", () => setState(G.restUp(state)));
 
     const finalBtn = app.querySelector('[data-action="final"]');
-    if (finalBtn) finalBtn.addEventListener("click", () => setState(G.playAllIrelandFinal(state)));
+    if (finalBtn) finalBtn.addEventListener("click", () => window.GaaMatch.start(state, G, true, setState));
 
     app.querySelectorAll('[data-action="upgrade"]').forEach((btn) => {
       btn.addEventListener("click", () => setState(G.upgradeAttribute(state, btn.dataset.key)));
