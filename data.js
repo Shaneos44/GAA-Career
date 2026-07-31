@@ -4,6 +4,7 @@
 
 (function () {
   const S = window.GaaSeason;
+  const P = window.GaaProgress;
 
   const COUNTIES = [
     "Antrim", "Armagh", "Carlow", "Cavan", "Clare", "Cork", "Derry", "Donegal",
@@ -124,11 +125,35 @@
         championships: 0, allIrelands: 0, allStars: 0,
       },
       achievements: [],
+      seenGames: {},                       // mini-games already explained
+      settings: { sound: true, haptics: true },
+      objective: P.createObjective(0),
       log: [{ id: cryptoId(), type: "info",
         text: `${cleanName} signed on at ${cleanClub}, ${position.label} on the Junior B panel. Ten league games to prove it.` }],
     };
     state.league = S.createLeague(TIERS[0], teamName(state));
     return state;
+  }
+
+  /** Records that a mini-game's coach card has been shown. */
+  function markGameSeen(state, key) {
+    if (state.seenGames && state.seenGames[key]) return state;
+    return { ...state, seenGames: { ...(state.seenGames || {}), [key]: true } };
+  }
+
+  function toggleSetting(state, key) {
+    const settings = { ...(state.settings || {}), [key]: !(state.settings || {})[key] };
+    return { ...state, settings };
+  }
+
+  /** Awards any achievements the state has just unlocked. */
+  function awardAchievements(state, events) {
+    const unlocked = P.checkAchievements(state, computeOverall(state.attributes));
+    if (!unlocked.length) return state;
+    unlocked.forEach((a) => {
+      pushLog(events, { type: "trophy", text: `ACHIEVEMENT — ${a.name}: ${a.desc}.` });
+    });
+    return { ...state, achievements: [...(state.achievements || []), ...unlocked.map((a) => a.key)] };
   }
 
   // ---------- Match resolution ----------
@@ -289,6 +314,7 @@
     if (S.leagueComplete(league)) {
       next = concludeLeague(next, events);
     }
+    next = awardAchievements(next, events);
     return withLog(next, events);
   }
 
@@ -325,10 +351,24 @@
       pushLog(events, { type: "info", text: "Mid-table finish — no movement. The Championship is your second chance." });
     }
 
+    // The manager's target for the year.
+    let trainingPoints = state.trainingPoints;
+    if (state.objective) {
+      if (P.objectiveMet(state.objective, pos)) {
+        trainingPoints += state.objective.reward;
+        pushLog(events, { type: "promo",
+          text: `Season objective met — "${state.objective.desc}". The manager hands you ${state.objective.reward} extra training points.` });
+      } else {
+        pushLog(events, { type: "info",
+          text: `Season objective missed — "${state.objective.desc}".` });
+      }
+    }
+
     pushLog(events, { type: "promo", text: `${tier.champLabel} starts now. Knockout football — win or your season is over.` });
 
     return {
       ...state,
+      trainingPoints,
       career,
       phase: "championship",
       pendingTierChange,
@@ -386,7 +426,7 @@
       } else {
         pushLog(events, { type: "trophy", text: `${tier.champLabel} WINNERS! Silverware for ${teamName(state)}.` });
       }
-      next = { ...next, career };
+      next = { ...next, career, doubleWon: next.doubleWon || state.leagueFinishPos === 1 };
       next.lastMatchSummary.championshipWon = true;
       next.lastMatchSummary.allIreland = !!tier.isTop;
     } else if (champ.eliminated) {
@@ -397,6 +437,7 @@
     if (S.championshipComplete(champ)) {
       next = { ...next, phase: "offseason" };
     }
+    next = awardAchievements(next, events);
     return withLog(next, events);
   }
 
@@ -439,8 +480,12 @@
       career,
       trainingPoints: state.trainingPoints + 6,
       lastSeasonAllStar: wonAllStar,
+      doubleWon: false,
+      objective: P.createObjective(newTierIndex),
     };
     next.league = S.createLeague(TIERS[newTierIndex], teamName(next));
+    pushLog(events, { type: "info", text: `Manager's target: ${next.objective.desc}.` });
+    next = awardAchievements(next, events);
     return withLog(next, events);
   }
 
@@ -453,11 +498,12 @@
     const label = (ATTRS.find((a) => a.key === key) || {}).label || key;
     const events = [];
     pushLog(events, { type: "train", text: `${label} up to ${value + 1}.` });
-    return withLog({
+    const upgraded = awardAchievements({
       ...state,
       trainingPoints: state.trainingPoints - cost,
       attributes: { ...state.attributes, [key]: value + 1 },
     }, events);
+    return withLog(upgraded, events);
   }
 
   function restUp(state) {
@@ -486,5 +532,6 @@
     nextChampionshipFixture, playChampionshipMatch,
     startNextSeason,
     upgradeAttribute, restUp,
+    markGameSeen, toggleSetting, awardAchievements,
   };
 })();

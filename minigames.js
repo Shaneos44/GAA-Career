@@ -19,8 +19,10 @@
     return "miss";
   }
 
+  let hapticsOn = true;
+
   function buzz(rating) {
-    if (!navigator.vibrate) return;
+    if (!hapticsOn || !navigator.vibrate) return;
     if (rating === "perfect") navigator.vibrate([18, 40, 18]);
     else if (rating === "miss") navigator.vibrate(90);
     else navigator.vibrate(14);
@@ -273,7 +275,7 @@
         stateEl.textContent = "NOW!";
         subEl.textContent = "";
         A.tick();
-        if (navigator.vibrate) navigator.vibrate(12);
+        if (hapticsOn && navigator.vibrate) navigator.vibrate(12);
       }, delay);
 
       function tap(e) {
@@ -427,5 +429,6 @@
 
   window.GaaMinigames = {
     timingBar, swipeKick, tapRush, reactionTap, pickThePass, holdAndRelease, rate,
+    setHaptics(v) { hapticsOn = !!v; },
   };
 })();

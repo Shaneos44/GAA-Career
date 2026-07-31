@@ -44,13 +44,29 @@ shots and frees; a Full-Back gets blocks and tackles; Midfield sees the widest
 mix. Higher attributes widen the timing windows, and higher divisions speed
 them up.
 
+## Learning the game
+
+You don't have to read any of this to play — the game teaches itself:
+
+- **Coach cards.** The first time you ever meet a mini-game in a match, play
+  pauses and a card explains it. Each one appears exactly once.
+- **Guide tab.** Every mini-game written out with what to do and how it's
+  scored, plus how promotion, relegation, energy and training all work.
+- **Practice mode.** Drill any mini-game on repeat from the Guide tab, with
+  nothing at stake and no effect on your career.
+
 ## Other systems
 
 - **Energy** drains each match and recovers with rest. Play on empty and you
   perform worse and risk picking up a knock that rules you out for a game or two.
 - **Training points** are earned from matches, scaled by your performance
   rating, and spent levelling attributes. Each level costs more than the last.
+- **Season objectives.** The manager sets a target each year — top 3, top 2,
+  or win the division, depending on your level. Hit it for a training-point bonus.
+- **16 achievements**, from your first goal to Sam Maguire.
 - **Form**, a live league table, career records, and a full match-news feed.
+- **Settings** for sound and vibration, and you can abandon a match at any
+  time — it won't be recorded and the fixture stays on your schedule.
 
 Progress saves automatically to your browser.
 
@@ -83,6 +99,8 @@ node build.js
 ## Files
 
 - `season.js` — league tables, fixtures, promotion/relegation, championship draw
+- `progress.js` — achievements and season objectives
+- `guide.js` — how-to-play content, shared by the Guide tab and the coach cards
 - `data.js` — attributes, positions, the tier ladder, match resolution, career state
 - `minigames.js` — the six skill mechanics
 - `match.js` — builds each match from your position and runs it

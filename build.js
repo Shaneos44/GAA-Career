@@ -26,7 +26,7 @@ const css = read("styles.css")
   .replace(/^@import url\([^)]*\);\s*$/m, "")
   .concat(SYSTEM_FONTS);
 
-const scripts = ["season.js", "data.js", "audio.js", "confetti.js", "minigames.js", "match.js", "app.js"]
+const scripts = ["season.js", "progress.js", "data.js", "guide.js", "audio.js", "confetti.js", "minigames.js", "match.js", "app.js"]
   .map((f) => `<script>\n${read(f)}\n</script>`)
   .join("\n");
 

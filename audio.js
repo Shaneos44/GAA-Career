@@ -5,8 +5,10 @@
 
 (function () {
   let ctx = null;
+  let muted = false;
 
   function getCtx() {
+    if (muted) return null;
     if (ctx) return ctx;
     const Ctx = window.AudioContext || window.webkitAudioContext;
     if (!Ctx) return null;
@@ -57,6 +59,8 @@
 
   const SFX = {
     unlock,
+    setMuted(v) { muted = !!v; },
+    isMuted() { return muted; },
     whistle() {
       tone(2200, 0, 0.16, { type: "square", gain: 0.1 });
       tone(2200, 0.2, 0.28, { type: "square", gain: 0.1 });

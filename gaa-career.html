@@ -285,8 +285,13 @@ input:focus, select:focus {
 .gf-match-head { padding: 12px 16px 8px; text-align: center; }
 .gf-match-tier { font-size: 10px; letter-spacing: .1em; text-transform: uppercase;
                  color: var(--gold); font-weight: 700; margin-bottom: 5px; }
-.gf-match-vs { display: flex; align-items: center; justify-content: center; gap: 9px;
-               font-family: var(--font-display); flex-wrap: wrap; }
+/* Three columns keep the "v" centred between the teams; each name wraps
+   inside its own cell rather than stranding the "v" at a line end. */
+.gf-match-vs { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px;
+               font-family: var(--font-display); }
+.gf-match-vs .team.you { text-align: right; }
+.gf-match-vs .team.rival { text-align: left; }
+.gf-match-vs.solo { display: block; text-align: center; }
 .gf-match-vs .team { font-weight: 800; font-size: 16px; }
 .gf-match-vs .vs { color: var(--text-dim); font-size: 12px; font-weight: 600; }
 
@@ -472,6 +477,112 @@ input:focus, select:focus {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important;
                            transition-duration: .01ms !important; }
 }
+
+/* ================= Guide, coaching & settings ================= */
+
+/* Four tabs now, not three. */
+.gf-tabbar { grid-template-columns: repeat(4, 1fr); }
+
+/* --- Coach card: shown the first time a mini-game appears --- */
+.gf-coach {
+  position: fixed; inset: 0; z-index: 150; display: flex; align-items: center; justify-content: center;
+  padding: 18px; background: rgba(6,9,13,.86); backdrop-filter: blur(6px);
+  animation: gf-fade-in .2s ease;
+}
+@keyframes gf-fade-in { from { opacity: 0; } to { opacity: 1; } }
+.gf-coach-card {
+  width: 100%; max-width: 400px; text-align: center; padding: 26px 20px;
+  background: var(--surface); border: 1px solid rgba(242,201,76,.4); border-radius: var(--r-lg);
+  animation: gf-coach-in .3s cubic-bezier(.2,.9,.3,1.2);
+}
+@keyframes gf-coach-in { from { transform: scale(.9) translateY(12px); opacity: 0; } to { transform: none; opacity: 1; } }
+.gf-coach-icon { font-size: 44px; line-height: 1; margin-bottom: 8px; }
+.gf-coach-tag { font-size: 10px; letter-spacing: .14em; text-transform: uppercase;
+                color: var(--gold); font-weight: 700; margin-bottom: 4px; }
+.gf-coach-card h2 { font-size: 24px; margin-bottom: 12px; }
+.gf-coach-how { font-size: 15px; line-height: 1.55; margin: 0 0 12px; }
+.gf-coach-tip { font-size: 13px; line-height: 1.55; color: var(--text-dim);
+                background: var(--surface-2); border-radius: var(--r); padding: 11px 13px; margin: 0 0 18px; }
+.gf-coach-card b { color: var(--gold); font-weight: 700; }
+
+/* --- Abandon-match button --- */
+.gf-match-head { position: relative; }
+.gf-quit {
+  position: absolute; top: -2px; right: 0; width: 34px; height: 34px;
+  border-radius: 50%; border: 1px solid var(--edge); background: var(--surface-2);
+  color: var(--text-dim); font-size: 15px; line-height: 1; cursor: pointer;
+}
+.gf-quit:active { transform: scale(.92); }
+
+/* --- Guide list --- */
+.gf-guide-list { display: flex; flex-direction: column; gap: 8px; }
+.gf-guide-item { background: var(--surface-2); border: 1px solid var(--edge); border-radius: var(--r); overflow: hidden; }
+.gf-guide-item summary {
+  display: flex; align-items: center; gap: 10px; padding: 12px 13px;
+  cursor: pointer; list-style: none; min-height: 48px;
+}
+.gf-guide-item summary::-webkit-details-marker { display: none; }
+.gf-guide-item summary::after { content: '+'; margin-left: auto; color: var(--text-dim); font-size: 18px; font-weight: 700; }
+.gf-guide-item[open] summary::after { content: '−'; }
+.gf-guide-item summary .ic { font-size: 21px; line-height: 1; }
+.gf-guide-item summary .nm { font-weight: 700; font-size: 14px; }
+.gf-guide-item summary .at { font-size: 10.5px; color: var(--text-dim); }
+.gf-guide-body { padding: 0 13px 13px; }
+.gf-guide-body .how { font-size: 13.5px; line-height: 1.55; margin: 0 0 8px; }
+.gf-guide-body .tip { font-size: 12.5px; line-height: 1.55; color: var(--text-dim);
+                      border-left: 2px solid var(--edge-lit); padding-left: 10px; margin: 0 0 12px; }
+.gf-guide-body b { color: var(--gold); font-weight: 700; }
+
+/* --- Rules --- */
+.gf-rules { display: flex; flex-direction: column; gap: 12px; }
+.gf-rule .t { font-size: 13px; font-weight: 700; color: var(--signal-lt); margin-bottom: 3px; }
+.gf-rule .b { font-size: 12.5px; line-height: 1.55; color: var(--text-dim); }
+.gf-rule b { color: var(--text); font-weight: 700; }
+
+/* --- Achievements --- */
+.gf-ach-list { display: flex; flex-direction: column; gap: 6px; }
+.gf-ach { display: flex; align-items: center; gap: 10px; padding: 9px 11px;
+          background: var(--surface-2); border-radius: 10px; opacity: .45; }
+.gf-ach.on { opacity: 1; background: rgba(242,201,76,.09); }
+.gf-ach .ic { font-size: 17px; line-height: 1; }
+.gf-ach .tx { display: flex; flex-direction: column; min-width: 0; }
+.gf-ach .tx b { font-size: 13px; font-weight: 700; }
+.gf-ach.on .tx b { color: var(--gold); }
+.gf-ach .tx small { font-size: 11.5px; color: var(--text-dim); }
+
+/* --- Settings toggles --- */
+.gf-toggle {
+  width: 100%; display: flex; align-items: center; justify-content: space-between;
+  min-height: 50px; padding: 0 14px; margin-bottom: 8px; cursor: pointer;
+  background: var(--surface-2); border: 1px solid var(--edge); border-radius: var(--r);
+  color: var(--text); font-size: 14.5px; font-weight: 600;
+}
+.gf-toggle:last-child { margin-bottom: 0; }
+.gf-toggle i { width: 44px; height: 26px; border-radius: 999px; background: var(--edge);
+               position: relative; transition: background .18s ease; flex-shrink: 0; }
+.gf-toggle i::after { content: ''; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px;
+                      border-radius: 50%; background: #fff; transition: transform .18s ease; }
+.gf-toggle.on i { background: var(--signal); }
+.gf-toggle.on i::after { transform: translateX(18px); }
+
+/* --- Season objective --- */
+.gf-objective {
+  display: grid; gap: 2px; margin-top: 12px; padding: 11px 13px;
+  background: var(--surface-2); border-left: 3px solid var(--edge-lit); border-radius: 0 10px 10px 0;
+}
+.gf-objective.met { border-left-color: var(--signal-lt); }
+.gf-objective .l { font-size: 9.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--text-dim); }
+.gf-objective .d { font-size: 13px; font-weight: 600; }
+.gf-objective .s { font-size: 11.5px; color: var(--text-dim); }
+.gf-objective.met .s { color: var(--signal-lt); }
+
+/* --- Practice result --- */
+.gf-practice-again { text-align: center; }
+.gf-practice-score { font-family: var(--font-mono); font-size: 40px; font-weight: 700; margin-bottom: 12px; }
+.gf-practice-score small { font-size: 15px; color: var(--text-dim); }
+.gf-practice-score.r-perfect, .gf-practice-score.r-great { color: var(--signal-lt); }
+.gf-practice-score.r-good { color: var(--gold); }
+.gf-practice-score.r-miss { color: var(--bad); }
 
 /* Single-file build: system faces only — no network requests. */
 :root {
@@ -715,12 +826,63 @@ input:focus, select:focus {
 
 </script>
 <script>
+// GAA Career — long-term goals: achievements and per-season objectives.
+// Pure logic; data.js calls in after state changes.
+
+(function () {
+  const ACHIEVEMENTS = [
+    { key: "debut",      name: "The Debut",        desc: "Play your first match",            test: (c) => c.matches >= 1 },
+    { key: "firstwin",   name: "Off the Mark",     desc: "Win your first match",             test: (c) => c.wins >= 1 },
+    { key: "firstgoal",  name: "Green Flag",       desc: "Score your first goal",            test: (c) => c.goals >= 1 },
+    { key: "motm1",      name: "Star Man",         desc: "Win Man of the Match",             test: (c) => c.motm >= 1 },
+    { key: "motm10",     name: "Talisman",         desc: "Win 10 Man of the Match awards",   test: (c) => c.motm >= 10 },
+    { key: "league1",    name: "Division Winners", desc: "Win a divisional league",          test: (c) => c.leaguesWon >= 1 },
+    { key: "champ1",     name: "Silverware",       desc: "Win a championship",               test: (c) => c.championships >= 1 },
+    { key: "double",     name: "The Double",       desc: "Win a league and championship in the same season", test: (c, s) => s.doubleWon },
+    { key: "county",     name: "County Call-Up",   desc: "Reach the National League",        test: (c, s) => s.tierIndex >= 4 },
+    { key: "div1",       name: "Among the Elite",  desc: "Reach National League Div. 1",     test: (c, s) => s.tierIndex >= 7 },
+    { key: "allireland", name: "Sam Maguire",      desc: "Win the All-Ireland",              test: (c) => c.allIrelands >= 1 },
+    { key: "allstar",    name: "All Star",         desc: "Be named in the Team of the Year", test: (c) => c.allStars >= 1 },
+    { key: "century",    name: "Centurion",        desc: "Play 100 matches",                 test: (c) => c.matches >= 100 },
+    { key: "sharp",      name: "Sharpshooter",     desc: "Score 100 career points",          test: (c) => c.points >= 100 },
+    { key: "ovr80",      name: "Complete Player",  desc: "Reach an overall rating of 80",    test: (c, s, ovr) => ovr >= 80 },
+    { key: "loyal",      name: "Ten Seasons",      desc: "Play ten seasons",                 test: (c, s) => s.season >= 10 },
+  ];
+
+  /** Returns any achievements newly unlocked by the current state. */
+  function checkAchievements(state, overall) {
+    const have = new Set(state.achievements || []);
+    return ACHIEVEMENTS.filter((a) => !have.has(a.key) && a.test(state.career, state, overall));
+  }
+
+  // Season objectives — the manager's expectation for the year. Targets get
+  // harder the higher you climb.
+  function createObjective(tierIndex) {
+    if (tierIndex === 0) {
+      return { target: 3, desc: "Finish in the top 3 of the division", reward: 8 };
+    }
+    if (tierIndex < 4) {
+      return { target: 2, desc: "Finish in the top 2 and push for promotion", reward: 12 };
+    }
+    return { target: 1, desc: "Win the division", reward: 18 };
+  }
+
+  function objectiveMet(objective, finishPos) {
+    return !!objective && finishPos <= objective.target;
+  }
+
+  window.GaaProgress = { ACHIEVEMENTS, checkAchievements, createObjective, objectiveMet };
+})();
+
+</script>
+<script>
 // GAA Career — game data & pure logic.
 // No DOM access here: every function takes the current save-state and
 // returns a brand new state (plus log entries). app.js owns rendering.
 
 (function () {
   const S = window.GaaSeason;
+  const P = window.GaaProgress;
 
   const COUNTIES = [
     "Antrim", "Armagh", "Carlow", "Cavan", "Clare", "Cork", "Derry", "Donegal",
@@ -841,11 +1003,35 @@ input:focus, select:focus {
         championships: 0, allIrelands: 0, allStars: 0,
       },
       achievements: [],
+      seenGames: {},                       // mini-games already explained
+      settings: { sound: true, haptics: true },
+      objective: P.createObjective(0),
       log: [{ id: cryptoId(), type: "info",
         text: `${cleanName} signed on at ${cleanClub}, ${position.label} on the Junior B panel. Ten league games to prove it.` }],
     };
     state.league = S.createLeague(TIERS[0], teamName(state));
     return state;
+  }
+
+  /** Records that a mini-game's coach card has been shown. */
+  function markGameSeen(state, key) {
+    if (state.seenGames && state.seenGames[key]) return state;
+    return { ...state, seenGames: { ...(state.seenGames || {}), [key]: true } };
+  }
+
+  function toggleSetting(state, key) {
+    const settings = { ...(state.settings || {}), [key]: !(state.settings || {})[key] };
+    return { ...state, settings };
+  }
+
+  /** Awards any achievements the state has just unlocked. */
+  function awardAchievements(state, events) {
+    const unlocked = P.checkAchievements(state, computeOverall(state.attributes));
+    if (!unlocked.length) return state;
+    unlocked.forEach((a) => {
+      pushLog(events, { type: "trophy", text: `ACHIEVEMENT — ${a.name}: ${a.desc}.` });
+    });
+    return { ...state, achievements: [...(state.achievements || []), ...unlocked.map((a) => a.key)] };
   }
 
   // ---------- Match resolution ----------
@@ -1006,6 +1192,7 @@ input:focus, select:focus {
     if (S.leagueComplete(league)) {
       next = concludeLeague(next, events);
     }
+    next = awardAchievements(next, events);
     return withLog(next, events);
   }
 
@@ -1042,10 +1229,24 @@ input:focus, select:focus {
       pushLog(events, { type: "info", text: "Mid-table finish — no movement. The Championship is your second chance." });
     }
 
+    // The manager's target for the year.
+    let trainingPoints = state.trainingPoints;
+    if (state.objective) {
+      if (P.objectiveMet(state.objective, pos)) {
+        trainingPoints += state.objective.reward;
+        pushLog(events, { type: "promo",
+          text: `Season objective met — "${state.objective.desc}". The manager hands you ${state.objective.reward} extra training points.` });
+      } else {
+        pushLog(events, { type: "info",
+          text: `Season objective missed — "${state.objective.desc}".` });
+      }
+    }
+
     pushLog(events, { type: "promo", text: `${tier.champLabel} starts now. Knockout football — win or your season is over.` });
 
     return {
       ...state,
+      trainingPoints,
       career,
       phase: "championship",
       pendingTierChange,
@@ -1103,7 +1304,7 @@ input:focus, select:focus {
       } else {
         pushLog(events, { type: "trophy", text: `${tier.champLabel} WINNERS! Silverware for ${teamName(state)}.` });
       }
-      next = { ...next, career };
+      next = { ...next, career, doubleWon: next.doubleWon || state.leagueFinishPos === 1 };
       next.lastMatchSummary.championshipWon = true;
       next.lastMatchSummary.allIreland = !!tier.isTop;
     } else if (champ.eliminated) {
@@ -1114,6 +1315,7 @@ input:focus, select:focus {
     if (S.championshipComplete(champ)) {
       next = { ...next, phase: "offseason" };
     }
+    next = awardAchievements(next, events);
     return withLog(next, events);
   }
 
@@ -1156,8 +1358,12 @@ input:focus, select:focus {
       career,
       trainingPoints: state.trainingPoints + 6,
       lastSeasonAllStar: wonAllStar,
+      doubleWon: false,
+      objective: P.createObjective(newTierIndex),
     };
     next.league = S.createLeague(TIERS[newTierIndex], teamName(next));
+    pushLog(events, { type: "info", text: `Manager's target: ${next.objective.desc}.` });
+    next = awardAchievements(next, events);
     return withLog(next, events);
   }
 
@@ -1170,11 +1376,12 @@ input:focus, select:focus {
     const label = (ATTRS.find((a) => a.key === key) || {}).label || key;
     const events = [];
     pushLog(events, { type: "train", text: `${label} up to ${value + 1}.` });
-    return withLog({
+    const upgraded = awardAchievements({
       ...state,
       trainingPoints: state.trainingPoints - cost,
       attributes: { ...state.attributes, [key]: value + 1 },
     }, events);
+    return withLog(upgraded, events);
   }
 
   function restUp(state) {
@@ -1203,7 +1410,122 @@ input:focus, select:focus {
     nextChampionshipFixture, playChampionshipMatch,
     startNextSeason,
     upgradeAttribute, restUp,
+    markGameSeen, toggleSetting, awardAchievements,
   };
+})();
+
+</script>
+<script>
+// GAA Career — how-to-play content, shared by three places: the Guide tab,
+// the first-time coach card shown in-match, and practice mode.
+//
+// One source of truth, so an instruction never drifts from the game it
+// describes.
+
+(function () {
+  const GUIDE = [
+    {
+      key: "shot", icon: "⚽", name: "Shot at Goal",
+      attr: "Kicking · Free-Taking",
+      how: "A ball sweeps back and forth across the bar. Tap <b>STRIKE</b> when it's over the bright green centre.",
+      tip: "You do this twice for every shot — once for <b>power</b>, then again for <b>placement</b>. Two good hits is a point; two near-perfect hits can be a goal.",
+    },
+    {
+      key: "free", icon: "🎯", name: "Free Kick",
+      attr: "Free-Taking",
+      how: "Press on the ball and <b>drag backwards</b>, like pulling back a slingshot, then let go.",
+      tip: "The gold dashed ring is your target — match both its <b>direction</b> and its <b>distance</b> from the ball. Drag further for more power.",
+    },
+    {
+      key: "catch", icon: "🙌", name: "High Ball",
+      attr: "High Fielding",
+      how: "<b>Press and hold</b> to rise for the ball. The bar fills while you hold. <b>Release</b> when it reaches the green zone.",
+      tip: "Let go too early and you jump short; hold too long and the bar overruns the zone entirely. Time your leap for the apex.",
+    },
+    {
+      key: "tackle", icon: "🛡️", name: "Tackle",
+      attr: "Tackling",
+      how: "Same sweeping bar as a shot, but faster and with a tighter window. Tap to commit to the hit.",
+      tip: "Mistime it and you're beaten for a score. Raising <b>Tackling</b> widens the window.",
+    },
+    {
+      key: "sprint", icon: "🏃", name: "Solo Run",
+      attr: "Pace",
+      how: "<b>Tap the button as fast as you can</b> for three seconds to burst clear of the defender chasing you.",
+      tip: "Watch the shield closing along the bottom — you need to fill the bar before it catches you. Higher <b>Pace</b> means fewer taps needed.",
+    },
+    {
+      key: "block", icon: "🧤", name: "Block",
+      attr: "Reflexes",
+      how: "The pad says <b>HOLD…</b>. The instant it turns red and says <b>NOW!</b>, tap it.",
+      tip: "Tapping before it turns is a guessed dive and scores almost nothing — wait for the signal. Higher <b>Reflexes</b> gives you more time to react.",
+    },
+    {
+      key: "pass", icon: "👁️", name: "Pick the Pass",
+      attr: "Vision",
+      how: "Several players drift around the pitch. <b>Tap the green one</b> — the runner in space — before the timer bar empties.",
+      tip: "Blue players are marked; hitting one is a turnover. Picking the right runner quickly scores highest. Tougher divisions add more decoys.",
+    },
+  ];
+
+  const byKey = {};
+  GUIDE.forEach((g) => { byKey[g.key] = g; });
+
+  const RULES = [
+    {
+      title: "The league",
+      body: "Every season is 10 league games against the five other teams in your division, home and away. Two points for a win, one for a draw.",
+    },
+    {
+      title: "Going up",
+      body: "You are promoted <b>only</b> by finishing 1st in your division. A good championship run will not do it — the league is what moves you up the ladder.",
+    },
+    {
+      title: "Going down",
+      body: "Finish 6th and bottom and you are relegated. It cascades — drop out of the National League divisions and you're back playing club football.",
+    },
+    {
+      title: "The championship",
+      body: "After the league comes knockout football: Quarter-Final, Semi-Final, Final. Lose once and your season is over. Finishing high in the league earns you an easier draw. Level games go to extra time.",
+    },
+    {
+      title: "Energy & injuries",
+      body: "Every match drains energy. Play on empty and you perform worse and risk a knock that rules you out for a game or two. <b>Rest Up</b> to recover — there's no limit on how often you rest.",
+    },
+    {
+      title: "Training",
+      body: "Matches earn training points, scaled by how well you actually played. Spend them on attributes in the <b>Player</b> tab. Each level costs more than the last, and higher attributes widen the timing windows in every mini-game.",
+    },
+    {
+      title: "The top",
+      body: "Reach National League Div. 1 and win its championship to bring home Sam Maguire. All Stars are awarded at the end of a season, weighted by your rating, the level you played at, and what you won.",
+    },
+  ];
+
+  /** Full-screen coach card shown the first time a mini-game comes up. */
+  function coachCard(g) {
+    return new Promise((resolve) => {
+      const el = document.createElement("div");
+      el.className = "gf-coach";
+      el.innerHTML = `
+        <div class="gf-coach-card">
+          <div class="gf-coach-icon">${g.icon}</div>
+          <div class="gf-coach-tag">New situation</div>
+          <h2>${g.name}</h2>
+          <p class="gf-coach-how">${g.how}</p>
+          <p class="gf-coach-tip">${g.tip}</p>
+          <button class="btn btn-primary btn-lg" data-action="coach-ok">Got it</button>
+        </div>
+      `;
+      document.body.appendChild(el);
+      el.querySelector('[data-action="coach-ok"]').addEventListener("click", () => {
+        el.remove();
+        resolve();
+      });
+    });
+  }
+
+  window.GaaGuide = { GUIDE, byKey, RULES, coachCard };
 })();
 
 </script>
@@ -1215,8 +1537,10 @@ input:focus, select:focus {
 
 (function () {
   let ctx = null;
+  let muted = false;
 
   function getCtx() {
+    if (muted) return null;
     if (ctx) return ctx;
     const Ctx = window.AudioContext || window.webkitAudioContext;
     if (!Ctx) return null;
@@ -1267,6 +1591,8 @@ input:focus, select:focus {
 
   const SFX = {
     unlock,
+    setMuted(v) { muted = !!v; },
+    isMuted() { return muted; },
     whistle() {
       tone(2200, 0, 0.16, { type: "square", gain: 0.1 });
       tone(2200, 0.2, 0.28, { type: "square", gain: 0.1 });
@@ -1378,8 +1704,10 @@ input:focus, select:focus {
     return "miss";
   }
 
+  let hapticsOn = true;
+
   function buzz(rating) {
-    if (!navigator.vibrate) return;
+    if (!hapticsOn || !navigator.vibrate) return;
     if (rating === "perfect") navigator.vibrate([18, 40, 18]);
     else if (rating === "miss") navigator.vibrate(90);
     else navigator.vibrate(14);
@@ -1632,7 +1960,7 @@ input:focus, select:focus {
         stateEl.textContent = "NOW!";
         subEl.textContent = "";
         A.tick();
-        if (navigator.vibrate) navigator.vibrate(12);
+        if (hapticsOn && navigator.vibrate) navigator.vibrate(12);
       }, delay);
 
       function tap(e) {
@@ -1786,6 +2114,7 @@ input:focus, select:focus {
 
   window.GaaMinigames = {
     timingBar, swipeKick, tapRush, reactionTap, pickThePass, holdAndRelease, rate,
+    setHaptics(v) { hapticsOn = !!v; },
   };
 })();
 
@@ -1799,6 +2128,7 @@ input:focus, select:focus {
   const A = window.GaaAudio;
   const C = window.GaaConfetti;
   const M = window.GaaMinigames;
+  const GD = window.GaaGuide;
 
   function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
   function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
@@ -1964,6 +2294,7 @@ input:focus, select:focus {
     overlay.innerHTML = `
       <div class="gf-match-card">
         <div class="gf-match-head">
+          <button class="gf-quit" data-action="quit" aria-label="Abandon match">✕</button>
           <div class="gf-match-tier">${meta.label.toUpperCase()}</div>
           <div class="gf-match-vs">
             <span class="team you">${G.teamName(state)}</span>
@@ -2036,8 +2367,9 @@ input:focus, select:focus {
       .addEventListener("click", () => { overlay.remove(); onContinue(); });
   }
 
-  async function start(state, G, kind, onComplete) {
+  async function start(state, G, kind, onComplete, onSeen) {
     A.unlock();
+    onSeen = onSeen || (() => {});
     const meta = kind === "championship" ? G.nextChampionshipFixture(state) : G.nextLeagueFixture(state);
     if (!meta) return;
 
@@ -2046,17 +2378,37 @@ input:focus, select:focus {
     const cardInner = overlay.querySelector(".gf-card-inner");
     const ticker = overlay.querySelector(".gf-moment-ticker");
 
+    // Abandoning forfeits the fixture — the state is only committed at full time.
+    let abandoned = false;
+    overlay.querySelector('[data-action="quit"]').addEventListener("click", () => {
+      if (!confirm("Abandon this match? It won't be recorded and you'll come back to it.")) return;
+      abandoned = true;
+      overlay.remove();
+    });
+
     await playIntro(pitchEl);
 
     const count = kind === "championship" ? (meta.isFinal ? 8 : 7) : 6;
     const plan = buildPlan(state, G, count);
 
+    // Explain each mini-game the first time a player ever meets it.
+    let working = state;
     const events = [];
     for (const k of plan) {
+      if (abandoned) return;
+      const guideKey = k;
+      if (GD.byKey[guideKey] && !(working.seenGames || {})[guideKey]) {
+        await GD.coachCard(GD.byKey[guideKey]);
+        working = G.markGameSeen(working, guideKey);
+        onSeen(working);
+      }
+      if (abandoned) return;
       const fn = k === "catch" ? EVENTS.catch_ : EVENTS[k];
-      events.push(await fn(cardInner, state, ticker));
+      events.push(await fn(cardInner, working, ticker));
       await new Promise((r) => setTimeout(r, 240));
     }
+    if (abandoned) return;
+    state = working;
 
     const contribution = G.resolvePlayerEvents(events);
     const newState = kind === "championship"
@@ -2071,7 +2423,65 @@ input:focus, select:focus {
     });
   }
 
-  window.GaaMatch = { start };
+  /**
+   * Runs a single mini-game with nothing at stake, so a player can learn the
+   * controls without spending a fixture on it.
+   */
+  async function practice(state, G, kind) {
+    A.unlock();
+    const g = GD.byKey[kind];
+    const overlay = document.createElement("div");
+    overlay.className = "gf-match-overlay";
+    overlay.innerHTML = `
+      <div class="gf-match-card">
+        <div class="gf-match-head">
+          <button class="gf-quit" data-action="quit" aria-label="Leave practice">✕</button>
+          <div class="gf-match-tier">Practice · no effect on your career</div>
+          <div class="gf-match-vs solo"><span class="team you">${g.icon} ${g.name}</span></div>
+        </div>
+        <div class="gf-pitch">
+          <div class="gf-pitch-stripes"></div>
+          <div class="gf-goal"></div>
+          <div class="gf-card-inner"></div>
+        </div>
+        <div class="gf-moment-ticker"></div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+
+    let left = false;
+    overlay.querySelector('[data-action="quit"]').addEventListener("click", () => {
+      left = true;
+      overlay.remove();
+    });
+
+    const cardInner = overlay.querySelector(".gf-card-inner");
+    const ticker = overlay.querySelector(".gf-moment-ticker");
+    const fn = kind === "catch" ? EVENTS.catch_ : EVENTS[kind];
+
+    // Loop until they leave, so they can drill the same skill repeatedly.
+    while (!left) {
+      const ev = await fn(cardInner, state, ticker);
+      if (left) return;
+      const rating = M.rate(ev.score);
+      const again = document.createElement("div");
+      again.className = "gf-practice-again";
+      again.innerHTML = `
+        <div class="gf-practice-score r-${rating}">${ev.score}<small>/100</small></div>
+        <button class="btn btn-primary" data-action="again">Try again</button>
+        <button class="btn" data-action="done">Done</button>
+      `;
+      cardInner.appendChild(again);
+      const choice = await new Promise((resolve) => {
+        again.querySelector('[data-action="again"]').addEventListener("click", () => resolve("again"));
+        again.querySelector('[data-action="done"]').addEventListener("click", () => resolve("done"));
+      });
+      again.remove();
+      if (choice === "done") { overlay.remove(); return; }
+    }
+  }
+
+  window.GaaMatch = { start, practice };
 })();
 
 </script>
@@ -2084,6 +2494,8 @@ input:focus, select:focus {
   const SAVE_KEY = "gaa-career-save-v2";
   const G = window.GaaCareer;
   const S = window.GaaSeason;
+  const GD = window.GaaGuide;
+  const P = window.GaaProgress;
   const app = document.getElementById("app");
 
   let state = load();
@@ -2100,7 +2512,16 @@ input:focus, select:focus {
   function save() {
     try { localStorage.setItem(SAVE_KEY, JSON.stringify(state)); } catch (e) { /* private mode */ }
   }
-  function setState(next) { state = next; save(); render(); }
+  function setState(next) { state = next; save(); applySettings(); render(); }
+
+  /** Persist without a re-render — used mid-match so the overlay isn't disturbed. */
+  function persist(next) { state = next; save(); }
+
+  function applySettings() {
+    const st = (state && state.settings) || {};
+    window.GaaAudio.setMuted(st.sound === false);
+    window.GaaMinigames.setHaptics(st.haptics !== false);
+  }
 
   function esc(str) {
     const d = document.createElement("div");
@@ -2265,6 +2686,12 @@ input:focus, select:focus {
         <p class="dim small" style="margin:10px 0 0">
           Win the division to go up. Finish ${S.TEAMS_PER_DIVISION}th and you go down.
         </p>
+        ${state.objective ? `
+          <div class="gf-objective ${pos <= state.objective.target ? "met" : ""}">
+            <span class="l">Manager's target</span>
+            <span class="d">${esc(state.objective.desc)}</span>
+            <span class="s">${pos <= state.objective.target ? "On track" : "Off track"}</span>
+          </div>` : ""}
       </div>
     `;
   }
@@ -2386,13 +2813,84 @@ input:focus, select:focus {
     `;
   }
 
+  // ---------- Guide tab ----------
+
+  function guideTabHtml() {
+    const st = state.settings || {};
+    const have = new Set(state.achievements || []);
+    const unlocked = P.ACHIEVEMENTS.filter((a) => have.has(a.key)).length;
+
+    return `
+      <div class="panel">
+        <div class="gf-row-between"><span class="k">How to play the mini-games</span></div>
+        <p class="dim small" style="margin:0 0 12px">
+          Matches are played, not simulated. Tap <b>Practice</b> on any of these to drill it
+          with nothing at stake.
+        </p>
+        <div class="gf-guide-list">
+          ${GD.GUIDE.map((g) => `
+            <details class="gf-guide-item">
+              <summary>
+                <span class="ic">${g.icon}</span>
+                <span class="nm">${esc(g.name)}</span>
+                <span class="at">${esc(g.attr)}</span>
+              </summary>
+              <div class="gf-guide-body">
+                <p class="how">${g.how}</p>
+                <p class="tip">${g.tip}</p>
+                <button class="btn btn-primary" data-action="practice" data-kind="${g.key}">Practice ${esc(g.name)}</button>
+              </div>
+            </details>`).join("")}
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="gf-row-between"><span class="k">How the career works</span></div>
+        <div class="gf-rules">
+          ${GD.RULES.map((r) => `
+            <div class="gf-rule">
+              <div class="t">${esc(r.title)}</div>
+              <div class="b">${r.body}</div>
+            </div>`).join("")}
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="gf-row-between">
+          <span class="k">Achievements</span>
+          <span class="v">${unlocked}/${P.ACHIEVEMENTS.length}</span>
+        </div>
+        <div class="gf-ach-list">
+          ${P.ACHIEVEMENTS.map((a) => `
+            <div class="gf-ach ${have.has(a.key) ? "on" : ""}">
+              <span class="ic">${have.has(a.key) ? "🏅" : "🔒"}</span>
+              <span class="tx"><b>${esc(a.name)}</b><small>${esc(a.desc)}</small></span>
+            </div>`).join("")}
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="gf-row-between"><span class="k">Settings</span></div>
+        <button class="gf-toggle ${st.sound !== false ? "on" : ""}" data-action="toggle" data-key="sound">
+          <span>Sound effects</span><i></i>
+        </button>
+        <button class="gf-toggle ${st.haptics !== false ? "on" : ""}" data-action="toggle" data-key="haptics">
+          <span>Vibration</span><i></i>
+        </button>
+      </div>
+    `;
+  }
+
   // ---------- Render ----------
 
   function render() {
     if (!state) { renderSetup(); return; }
     if (state.phase === "offseason") tab = "season";
 
-    const body = tab === "table" ? tableTabHtml() : tab === "player" ? playerTabHtml() : seasonTabHtml();
+    const body = tab === "table" ? tableTabHtml()
+      : tab === "player" ? playerTabHtml()
+      : tab === "guide" ? guideTabHtml()
+      : seasonTabHtml();
 
     app.innerHTML = `
       <div class="gf-app">
@@ -2404,6 +2902,7 @@ input:focus, select:focus {
           <button class="gf-tabbtn ${tab === "season" ? "on" : ""}" data-tab="season"><span>🏟️</span>Season</button>
           <button class="gf-tabbtn ${tab === "table" ? "on" : ""}" data-tab="table"><span>📊</span>Table</button>
           <button class="gf-tabbtn ${tab === "player" ? "on" : ""}" data-tab="player"><span>👤</span>Player</button>
+          <button class="gf-tabbtn ${tab === "guide" ? "on" : ""}" data-tab="guide"><span>📖</span>Guide</button>
         </nav>
       </div>
     `;
@@ -2420,8 +2919,8 @@ input:focus, select:focus {
       if (el) el.addEventListener("click", fn);
     };
 
-    on('[data-action="play-league"]', () => window.GaaMatch.start(state, G, "league", setState));
-    on('[data-action="play-champ"]', () => window.GaaMatch.start(state, G, "championship", setState));
+    on('[data-action="play-league"]', () => window.GaaMatch.start(state, G, "league", setState, persist));
+    on('[data-action="play-champ"]', () => window.GaaMatch.start(state, G, "championship", setState, persist));
     on('[data-action="rest"]', () => setState(G.restUp(state)));
     on('[data-action="next-season"]', () => setState(G.startNextSeason(state)));
     on('[data-action="reset"]', () => {
@@ -2436,8 +2935,17 @@ input:focus, select:focus {
     app.querySelectorAll('[data-action="upgrade"]').forEach((btn) => {
       btn.addEventListener("click", () => setState(G.upgradeAttribute(state, btn.dataset.key)));
     });
+
+    app.querySelectorAll('[data-action="practice"]').forEach((btn) => {
+      btn.addEventListener("click", () => window.GaaMatch.practice(state, G, btn.dataset.kind));
+    });
+
+    app.querySelectorAll('[data-action="toggle"]').forEach((btn) => {
+      btn.addEventListener("click", () => setState(G.toggleSetting(state, btn.dataset.key)));
+    });
   }
 
+  applySettings();
   render();
 })();
 

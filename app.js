@@ -6,6 +6,8 @@
   const SAVE_KEY = "gaa-career-save-v2";
   const G = window.GaaCareer;
   const S = window.GaaSeason;
+  const GD = window.GaaGuide;
+  const P = window.GaaProgress;
   const app = document.getElementById("app");
 
   let state = load();
@@ -22,7 +24,16 @@
   function save() {
     try { localStorage.setItem(SAVE_KEY, JSON.stringify(state)); } catch (e) { /* private mode */ }
   }
-  function setState(next) { state = next; save(); render(); }
+  function setState(next) { state = next; save(); applySettings(); render(); }
+
+  /** Persist without a re-render — used mid-match so the overlay isn't disturbed. */
+  function persist(next) { state = next; save(); }
+
+  function applySettings() {
+    const st = (state && state.settings) || {};
+    window.GaaAudio.setMuted(st.sound === false);
+    window.GaaMinigames.setHaptics(st.haptics !== false);
+  }
 
   function esc(str) {
     const d = document.createElement("div");
@@ -187,6 +198,12 @@
         <p class="dim small" style="margin:10px 0 0">
           Win the division to go up. Finish ${S.TEAMS_PER_DIVISION}th and you go down.
         </p>
+        ${state.objective ? `
+          <div class="gf-objective ${pos <= state.objective.target ? "met" : ""}">
+            <span class="l">Manager's target</span>
+            <span class="d">${esc(state.objective.desc)}</span>
+            <span class="s">${pos <= state.objective.target ? "On track" : "Off track"}</span>
+          </div>` : ""}
       </div>
     `;
   }
@@ -308,13 +325,84 @@
     `;
   }
 
+  // ---------- Guide tab ----------
+
+  function guideTabHtml() {
+    const st = state.settings || {};
+    const have = new Set(state.achievements || []);
+    const unlocked = P.ACHIEVEMENTS.filter((a) => have.has(a.key)).length;
+
+    return `
+      <div class="panel">
+        <div class="gf-row-between"><span class="k">How to play the mini-games</span></div>
+        <p class="dim small" style="margin:0 0 12px">
+          Matches are played, not simulated. Tap <b>Practice</b> on any of these to drill it
+          with nothing at stake.
+        </p>
+        <div class="gf-guide-list">
+          ${GD.GUIDE.map((g) => `
+            <details class="gf-guide-item">
+              <summary>
+                <span class="ic">${g.icon}</span>
+                <span class="nm">${esc(g.name)}</span>
+                <span class="at">${esc(g.attr)}</span>
+              </summary>
+              <div class="gf-guide-body">
+                <p class="how">${g.how}</p>
+                <p class="tip">${g.tip}</p>
+                <button class="btn btn-primary" data-action="practice" data-kind="${g.key}">Practice ${esc(g.name)}</button>
+              </div>
+            </details>`).join("")}
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="gf-row-between"><span class="k">How the career works</span></div>
+        <div class="gf-rules">
+          ${GD.RULES.map((r) => `
+            <div class="gf-rule">
+              <div class="t">${esc(r.title)}</div>
+              <div class="b">${r.body}</div>
+            </div>`).join("")}
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="gf-row-between">
+          <span class="k">Achievements</span>
+          <span class="v">${unlocked}/${P.ACHIEVEMENTS.length}</span>
+        </div>
+        <div class="gf-ach-list">
+          ${P.ACHIEVEMENTS.map((a) => `
+            <div class="gf-ach ${have.has(a.key) ? "on" : ""}">
+              <span class="ic">${have.has(a.key) ? "🏅" : "🔒"}</span>
+              <span class="tx"><b>${esc(a.name)}</b><small>${esc(a.desc)}</small></span>
+            </div>`).join("")}
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="gf-row-between"><span class="k">Settings</span></div>
+        <button class="gf-toggle ${st.sound !== false ? "on" : ""}" data-action="toggle" data-key="sound">
+          <span>Sound effects</span><i></i>
+        </button>
+        <button class="gf-toggle ${st.haptics !== false ? "on" : ""}" data-action="toggle" data-key="haptics">
+          <span>Vibration</span><i></i>
+        </button>
+      </div>
+    `;
+  }
+
   // ---------- Render ----------
 
   function render() {
     if (!state) { renderSetup(); return; }
     if (state.phase === "offseason") tab = "season";
 
-    const body = tab === "table" ? tableTabHtml() : tab === "player" ? playerTabHtml() : seasonTabHtml();
+    const body = tab === "table" ? tableTabHtml()
+      : tab === "player" ? playerTabHtml()
+      : tab === "guide" ? guideTabHtml()
+      : seasonTabHtml();
 
     app.innerHTML = `
       <div class="gf-app">
@@ -326,6 +414,7 @@
           <button class="gf-tabbtn ${tab === "season" ? "on" : ""}" data-tab="season"><span>🏟️</span>Season</button>
           <button class="gf-tabbtn ${tab === "table" ? "on" : ""}" data-tab="table"><span>📊</span>Table</button>
           <button class="gf-tabbtn ${tab === "player" ? "on" : ""}" data-tab="player"><span>👤</span>Player</button>
+          <button class="gf-tabbtn ${tab === "guide" ? "on" : ""}" data-tab="guide"><span>📖</span>Guide</button>
         </nav>
       </div>
     `;
@@ -342,8 +431,8 @@
       if (el) el.addEventListener("click", fn);
     };
 
-    on('[data-action="play-league"]', () => window.GaaMatch.start(state, G, "league", setState));
-    on('[data-action="play-champ"]', () => window.GaaMatch.start(state, G, "championship", setState));
+    on('[data-action="play-league"]', () => window.GaaMatch.start(state, G, "league", setState, persist));
+    on('[data-action="play-champ"]', () => window.GaaMatch.start(state, G, "championship", setState, persist));
     on('[data-action="rest"]', () => setState(G.restUp(state)));
     on('[data-action="next-season"]', () => setState(G.startNextSeason(state)));
     on('[data-action="reset"]', () => {
@@ -358,7 +447,16 @@
     app.querySelectorAll('[data-action="upgrade"]').forEach((btn) => {
       btn.addEventListener("click", () => setState(G.upgradeAttribute(state, btn.dataset.key)));
     });
+
+    app.querySelectorAll('[data-action="practice"]').forEach((btn) => {
+      btn.addEventListener("click", () => window.GaaMatch.practice(state, G, btn.dataset.kind));
+    });
+
+    app.querySelectorAll('[data-action="toggle"]').forEach((btn) => {
+      btn.addEventListener("click", () => setState(G.toggleSetting(state, btn.dataset.key)));
+    });
   }
 
+  applySettings();
   render();
 })();

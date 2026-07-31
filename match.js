@@ -6,6 +6,7 @@
   const A = window.GaaAudio;
   const C = window.GaaConfetti;
   const M = window.GaaMinigames;
+  const GD = window.GaaGuide;
 
   function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
   function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
@@ -171,6 +172,7 @@
     overlay.innerHTML = `
       <div class="gf-match-card">
         <div class="gf-match-head">
+          <button class="gf-quit" data-action="quit" aria-label="Abandon match">✕</button>
           <div class="gf-match-tier">${meta.label.toUpperCase()}</div>
           <div class="gf-match-vs">
             <span class="team you">${G.teamName(state)}</span>
@@ -243,8 +245,9 @@
       .addEventListener("click", () => { overlay.remove(); onContinue(); });
   }
 
-  async function start(state, G, kind, onComplete) {
+  async function start(state, G, kind, onComplete, onSeen) {
     A.unlock();
+    onSeen = onSeen || (() => {});
     const meta = kind === "championship" ? G.nextChampionshipFixture(state) : G.nextLeagueFixture(state);
     if (!meta) return;
 
@@ -253,17 +256,37 @@
     const cardInner = overlay.querySelector(".gf-card-inner");
     const ticker = overlay.querySelector(".gf-moment-ticker");
 
+    // Abandoning forfeits the fixture — the state is only committed at full time.
+    let abandoned = false;
+    overlay.querySelector('[data-action="quit"]').addEventListener("click", () => {
+      if (!confirm("Abandon this match? It won't be recorded and you'll come back to it.")) return;
+      abandoned = true;
+      overlay.remove();
+    });
+
     await playIntro(pitchEl);
 
     const count = kind === "championship" ? (meta.isFinal ? 8 : 7) : 6;
     const plan = buildPlan(state, G, count);
 
+    // Explain each mini-game the first time a player ever meets it.
+    let working = state;
     const events = [];
     for (const k of plan) {
+      if (abandoned) return;
+      const guideKey = k;
+      if (GD.byKey[guideKey] && !(working.seenGames || {})[guideKey]) {
+        await GD.coachCard(GD.byKey[guideKey]);
+        working = G.markGameSeen(working, guideKey);
+        onSeen(working);
+      }
+      if (abandoned) return;
       const fn = k === "catch" ? EVENTS.catch_ : EVENTS[k];
-      events.push(await fn(cardInner, state, ticker));
+      events.push(await fn(cardInner, working, ticker));
       await new Promise((r) => setTimeout(r, 240));
     }
+    if (abandoned) return;
+    state = working;
 
     const contribution = G.resolvePlayerEvents(events);
     const newState = kind === "championship"
@@ -278,5 +301,63 @@
     });
   }
 
-  window.GaaMatch = { start };
+  /**
+   * Runs a single mini-game with nothing at stake, so a player can learn the
+   * controls without spending a fixture on it.
+   */
+  async function practice(state, G, kind) {
+    A.unlock();
+    const g = GD.byKey[kind];
+    const overlay = document.createElement("div");
+    overlay.className = "gf-match-overlay";
+    overlay.innerHTML = `
+      <div class="gf-match-card">
+        <div class="gf-match-head">
+          <button class="gf-quit" data-action="quit" aria-label="Leave practice">✕</button>
+          <div class="gf-match-tier">Practice · no effect on your career</div>
+          <div class="gf-match-vs solo"><span class="team you">${g.icon} ${g.name}</span></div>
+        </div>
+        <div class="gf-pitch">
+          <div class="gf-pitch-stripes"></div>
+          <div class="gf-goal"></div>
+          <div class="gf-card-inner"></div>
+        </div>
+        <div class="gf-moment-ticker"></div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+
+    let left = false;
+    overlay.querySelector('[data-action="quit"]').addEventListener("click", () => {
+      left = true;
+      overlay.remove();
+    });
+
+    const cardInner = overlay.querySelector(".gf-card-inner");
+    const ticker = overlay.querySelector(".gf-moment-ticker");
+    const fn = kind === "catch" ? EVENTS.catch_ : EVENTS[kind];
+
+    // Loop until they leave, so they can drill the same skill repeatedly.
+    while (!left) {
+      const ev = await fn(cardInner, state, ticker);
+      if (left) return;
+      const rating = M.rate(ev.score);
+      const again = document.createElement("div");
+      again.className = "gf-practice-again";
+      again.innerHTML = `
+        <div class="gf-practice-score r-${rating}">${ev.score}<small>/100</small></div>
+        <button class="btn btn-primary" data-action="again">Try again</button>
+        <button class="btn" data-action="done">Done</button>
+      `;
+      cardInner.appendChild(again);
+      const choice = await new Promise((resolve) => {
+        again.querySelector('[data-action="again"]').addEventListener("click", () => resolve("again"));
+        again.querySelector('[data-action="done"]').addEventListener("click", () => resolve("done"));
+      });
+      again.remove();
+      if (choice === "done") { overlay.remove(); return; }
+    }
+  }
+
+  window.GaaMatch = { start, practice };
 })();
