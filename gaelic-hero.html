@@ -57,6 +57,18 @@ h1, h2 { font-family: var(--font-display); font-weight: 800; letter-spacing: -0.
 
 button, input, select { font-family: inherit; touch-action: manipulation; }
 
+/* Long-pressing a control must never raise a text-selection or callout menu.
+   The high ball is a press-and-hold gesture, and WebKit will otherwise offer
+   "Copy" over the button label mid-charge. -webkit-touch-callout is the part
+   that actually suppresses the iOS callout; user-select alone does not.
+   Body copy (match news, the guide, the rules) stays selectable. */
+button, .gf-match-overlay, .gf-coach, .gf-pos, .gf-toggle, .gf-guide-item summary {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
 .gf-app { min-height: 100dvh; }
 .gf-wrap {
   max-width: 560px; margin: 0 auto;
@@ -2100,9 +2112,13 @@ input:focus, select:focus {
         finish(score);
       }
 
+      // Android raises a context menu on long-press, which CSS cannot suppress.
+      const blockMenu = (e) => e.preventDefault();
+
       btn.addEventListener("pointerdown", press);
       btn.addEventListener("pointerup", release);
       btn.addEventListener("pointerleave", release);
+      btn.addEventListener("contextmenu", blockMenu);
       const timer = setTimeout(() => { if (!done) { done = true; finish(6); } }, fillMs + 3000);
 
       return () => {
@@ -2112,6 +2128,7 @@ input:focus, select:focus {
         btn.removeEventListener("pointerdown", press);
         btn.removeEventListener("pointerup", release);
         btn.removeEventListener("pointerleave", release);
+        btn.removeEventListener("contextmenu", blockMenu);
       };
     });
   }

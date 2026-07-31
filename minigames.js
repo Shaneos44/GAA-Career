@@ -411,9 +411,13 @@
         finish(score);
       }
 
+      // Android raises a context menu on long-press, which CSS cannot suppress.
+      const blockMenu = (e) => e.preventDefault();
+
       btn.addEventListener("pointerdown", press);
       btn.addEventListener("pointerup", release);
       btn.addEventListener("pointerleave", release);
+      btn.addEventListener("contextmenu", blockMenu);
       const timer = setTimeout(() => { if (!done) { done = true; finish(6); } }, fillMs + 3000);
 
       return () => {
@@ -423,6 +427,7 @@
         btn.removeEventListener("pointerdown", press);
         btn.removeEventListener("pointerup", release);
         btn.removeEventListener("pointerleave", release);
+        btn.removeEventListener("contextmenu", blockMenu);
       };
     });
   }
