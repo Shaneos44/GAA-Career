@@ -1,0 +1,156 @@
+/* GAA Career — dark, GAA green/gold accented UI. Self-contained, no build step. */
+
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+:root {
+  --bg:        #0E1116;
+  --surface:   #161A21;
+  --surface-2: #1E242D;
+  --edge:      #2A313C;
+  --edge-lit:  #3A4452;
+  --text:      #EDF0F4;
+  --text-dim:  #8A93A2;
+  --signal:    #2E8B57;   /* GAA pitch green */
+  --signal-d:  #23724A;
+  --signal-ink:#FFFFFF;
+  --gold:      #F2C94C;
+  --r:  12px;
+  --r-lg: 18px;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; background: var(--bg); }
+body {
+  color: var(--text);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, sans-serif;
+  font-size: 16px; line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+h1, h2 {
+  font-family: 'Bricolage Grotesque', Inter, sans-serif;
+  font-weight: 800; letter-spacing: -0.03em; line-height: 1.05; margin: 0;
+}
+
+.dim { color: var(--text-dim); }
+
+/* ---------- Panels ---------- */
+.panel {
+  background: var(--surface); border: 1px solid var(--edge);
+  border-radius: var(--r-lg); padding: 16px; margin-bottom: 12px;
+}
+label { display: block; font-size: 12px; font-weight: 600; letter-spacing: .06em;
+        text-transform: uppercase; color: var(--text-dim); margin-bottom: 7px; }
+input, select {
+  width: 100%; min-height: 48px; padding: 12px 14px;
+  background: var(--surface-2); color: var(--text);
+  border: 1px solid var(--edge); border-radius: var(--r);
+  font-family: inherit; font-size: 16px;
+}
+input:focus, select:focus {
+  outline: none; border-color: var(--signal);
+  box-shadow: 0 0 0 3px rgba(46,139,87,.25);
+}
+.field { margin-bottom: 14px; }
+.field:last-child { margin-bottom: 0; }
+
+/* ---------- Buttons ---------- */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%; min-height: 50px; padding: 0 20px;
+  border-radius: var(--r); border: 1px solid var(--edge-lit);
+  background: var(--surface-2); color: var(--text);
+  font-family: inherit; font-size: 16px; font-weight: 600;
+  cursor: pointer; text-decoration: none;
+  transition: transform .08s ease, background .15s ease, border-color .15s ease;
+}
+.btn:hover:not(:disabled) { background: #252C36; }
+.btn:active:not(:disabled) { transform: scale(.985); }
+.btn:disabled { opacity: .4; cursor: not-allowed; }
+.btn-primary {
+  background: var(--signal); color: var(--signal-ink); border-color: var(--signal);
+  font-weight: 700;
+}
+.btn-primary:hover:not(:disabled) { background: var(--signal-d); border-color: var(--signal-d); }
+.btn-quiet { background: transparent; border-color: transparent; color: var(--text-dim); }
+.btn-quiet:hover:not(:disabled) { background: var(--surface-2); color: var(--text); }
+.btn-sm { min-height: 38px; width: auto; font-size: 13px; padding: 0 14px; border-radius: 9px; }
+
+/* ---------- GAA Career specific ---------- */
+.gf-wrap { max-width: 640px; margin: 0 auto; padding: 20px 16px 60px; }
+
+.gf-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 14px; }
+.gf-title { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 22px; letter-spacing: -0.02em; }
+.gf-sub { color: var(--text-dim); font-size: 13px; margin-top: 2px; }
+
+.gf-trophies { display: flex; gap: 10px; margin-bottom: 14px; }
+.gf-trophy { flex: 1; background: var(--surface); border: 1px solid var(--edge); border-radius: var(--r); padding: 10px 12px; text-align: center; }
+.gf-trophy .n { font-family: 'JetBrains Mono', monospace; font-size: 20px; font-weight: 700; color: var(--gold); }
+.gf-trophy .l { font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-dim); margin-top: 2px; }
+
+.gf-bar-track { background: var(--surface-2); border-radius: 999px; height: 10px; overflow: hidden; border: 1px solid var(--edge); }
+.gf-bar-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, #2E8B57, #6FCF97); transition: width .4s ease; }
+.gf-bar-fill.energy { background: linear-gradient(90deg, #C06B31, #F2C94C); }
+.gf-bar-fill.energy.low { background: linear-gradient(90deg, #C0392B, #FF6B6B); }
+
+.gf-row-between { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+.gf-row-between .k { font-size: 13px; font-weight: 600; }
+.gf-row-between .v { font-size: 12px; color: var(--text-dim); font-family: 'JetBrains Mono', monospace; }
+
+.gf-ladder { display: flex; flex-direction: column; gap: 4px; margin-top: 12px; }
+.gf-ladder-step { display: flex; align-items: center; gap: 8px; font-size: 12px; padding: 5px 8px; border-radius: 8px; color: var(--text-dim); }
+.gf-ladder-step .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--edge-lit); flex-shrink: 0; }
+.gf-ladder-step.done { color: var(--text); }
+.gf-ladder-step.done .dot { background: #6FCF97; }
+.gf-ladder-step.current { background: rgba(46,139,87,.12); color: var(--text); font-weight: 700; }
+.gf-ladder-step.current .dot { background: var(--gold); box-shadow: 0 0 0 4px rgba(242,201,76,.2); }
+
+.gf-attr { margin-bottom: 12px; }
+.gf-attr:last-child { margin-bottom: 0; }
+.gf-attr-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+.gf-attr-head .name { font-size: 13px; font-weight: 600; }
+.gf-attr-head .val { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--text-dim); }
+.gf-attr-row { display: flex; align-items: center; gap: 8px; }
+.gf-attr-row .gf-bar-track { flex: 1; height: 8px; }
+.gf-upgrade-btn {
+  flex-shrink: 0; width: 34px; height: 30px; border-radius: 8px;
+  border: 1px solid var(--edge-lit); background: var(--surface-2); color: var(--text);
+  font-weight: 700; cursor: pointer; font-size: 15px;
+}
+.gf-upgrade-btn:hover:not(:disabled) { background: #252C36; }
+.gf-upgrade-btn:disabled { opacity: .3; cursor: not-allowed; }
+
+.gf-actions { display: flex; gap: 10px; margin-top: 14px; }
+.gf-actions .btn { flex: 1; }
+
+.gf-final-panel {
+  text-align: center; padding: 22px 16px; border-radius: var(--r-lg);
+  background: linear-gradient(160deg, rgba(46,139,87,.18), rgba(242,201,76,.1));
+  border: 1px solid rgba(242,201,76,.4); margin-bottom: 12px;
+}
+.gf-final-panel h2 { font-size: 20px; margin-bottom: 8px; }
+.gf-final-panel p { color: var(--text-dim); font-size: 14px; margin-bottom: 16px; }
+.gf-final-panel .btn { max-width: 280px; margin: 0 auto; }
+
+.gf-log { display: flex; flex-direction: column; gap: 8px; max-height: 360px; overflow-y: auto; }
+.gf-log-item { font-size: 13px; line-height: 1.5; padding: 9px 11px; border-radius: 9px; background: var(--surface-2); border-left: 3px solid var(--edge-lit); }
+.gf-log-item.win { border-left-color: #6FCF97; }
+.gf-log-item.loss { border-left-color: #FF6B6B; }
+.gf-log-item.draw { border-left-color: var(--text-dim); }
+.gf-log-item.motm { border-left-color: var(--gold); color: #FFE6A0; }
+.gf-log-item.promo { border-left-color: var(--signal); color: #B7F0CE; font-weight: 600; }
+.gf-log-item.trophy { border-left-color: var(--gold); background: rgba(242,201,76,.1); color: #FFE6A0; font-weight: 700; }
+.gf-log-item.final { border-left-color: var(--signal); font-weight: 600; }
+.gf-log-item.train { border-left-color: #6FCF97; color: var(--text-dim); }
+
+.gf-setup h1 { font-size: 28px; margin-bottom: 10px; }
+.gf-setup p.dim { margin-bottom: 20px; font-size: 15px; }
+
+.gf-tp {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: 'JetBrains Mono', monospace; font-size: 13px;
+  background: var(--surface-2); border: 1px solid var(--edge); border-radius: 999px;
+  padding: 4px 10px;
+}
