@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">GAA Career</string>
+    <string name="title_activity_main">GAA Career</string>
+    <string name="package_name">ie.gaacareer.game</string>
+    <string name="custom_url_scheme">ie.gaacareer.game</string>
+</resources>

@@ -11,6 +11,9 @@
 <meta name="apple-mobile-web-app-title" content="GAA Career" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="format-detection" content="telephone=no" />
+<link rel="manifest" href="manifest.webmanifest" />
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+<link rel="icon" href="icons/favicon-32.png" sizes="32x32" />
 <style>
 /* GAA Career — mobile-first. Designed for a phone in one hand: bottom tab
    bar, thumb-reachable primary actions, no hover-dependent affordances. */
@@ -3011,6 +3014,13 @@ input:focus, select:focus {
   }
 })();
 
+</script>
+<script>
+  // Only meaningful on the web/PWA build: the native shell already ships the
+  // assets on-device, and file:// has no service worker support.
+  if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
+    addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+  }
 </script>
 </body>
 </html>

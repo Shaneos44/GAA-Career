@@ -76,6 +76,9 @@ Progress saves automatically to your browser.
 game is bundled into that single self-contained file: no other downloads, no
 network access needed.
 
+**Install it like an app.** Serve `www/` over HTTPS and it installs as a PWA —
+standalone, portrait, and fully playable offline via its service worker.
+
 **Or host it.** Turn on GitHub Pages (Settings → Pages → Source: *Deploy from
 a branch* → `main` / `root`) and play at
 `https://<user>.github.io/GAA-Career/`.
@@ -88,13 +91,30 @@ python3 -m http.server 8080
 
 then visit `http://localhost:8080`.
 
-### Rebuilding the single file
+### Rebuilding
 
-`gaa-career.html` is generated. After editing any source file:
+`gaa-career.html` and everything in `www/` are generated. After editing any
+source file:
 
 ```
-node build.js
+npm run build
 ```
+
+## iOS and Android
+
+The game is wrapped with [Capacitor](https://capacitorjs.com); `android/` and
+`ios/` are scaffolded and ready to build.
+
+```
+npm install
+npm run android      # build + sync + open Android Studio
+npm run ios          # build + sync + open Xcode  (needs macOS)
+npm run assets       # regenerate every icon and splash from assets/
+```
+
+**See [STORE.md](STORE.md) before submitting** — it covers signing, listing
+copy, the data-safety answers, screenshot sizes, and an important trademark
+issue with the current app name.
 
 ## Files
 
@@ -107,4 +127,8 @@ node build.js
 - `app.js` — screens, tabs, save/load
 - `audio.js` / `confetti.js` — procedural sound effects and celebrations
 - `styles.css` — mobile-first styling
-- `build.js` → `gaa-career.html` — single-file bundle (don't edit the output by hand)
+- `native.js` — Capacitor integration (splash, status bar, Android back button); no-ops on the web
+- `build.js` → `gaa-career.html` + `www/` — bundle, PWA manifest, service worker, privacy policy
+- `tools/make-assets.py` → `assets/`, `www/icons/` — procedurally drawn app icon and splash art
+- `capacitor.config.json`, `android/`, `ios/` — the native shells
+- `STORE.md` — app store submission guide
