@@ -16,7 +16,10 @@
   function load() {
     try {
       const raw = localStorage.getItem(SAVE_KEY);
-      return raw ? JSON.parse(raw) : null;
+      if (!raw) return null;
+      // Heal a save that stalled mid-transition rather than stranding the
+      // player on a screen with no way forward.
+      return G.reconcile(JSON.parse(raw));
     } catch (e) {
       return null;
     }

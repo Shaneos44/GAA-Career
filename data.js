@@ -466,7 +466,7 @@
     else if (change < 0) pushLog(events, { type: "loss", text: `Season ${state.season + 1}: down to ${TIERS[newTierIndex].division}.` });
     else pushLog(events, { type: "info", text: `Season ${state.season + 1} begins in ${TIERS[newTierIndex].division}.` });
 
-    const next = {
+    let next = {
       ...state,
       tierIndex: newTierIndex,
       season: state.season + 1,
@@ -487,6 +487,30 @@
     pushLog(events, { type: "info", text: `Manager's target: ${next.objective.desc}.` });
     next = awardAchievements(next, events);
     return withLog(next, events);
+  }
+
+  /**
+   * Repairs a save that stalled between phases. If a phase transition ever
+   * fails part-way, the save can point at a stage with no fixtures left,
+   * which strands the player on a screen with no way forward. Called on load
+   * so a stuck career heals itself instead of needing a reset.
+   */
+  function reconcile(state) {
+    if (!state || !state.league) return state;
+    const events = [];
+    let next = state;
+
+    if (next.phase === "league" && S.leagueComplete(next.league)) {
+      next = concludeLeague(next, events);
+    }
+    if (next.phase === "championship" &&
+        (!next.championship || S.championshipComplete(next.championship))) {
+      next = { ...next, phase: "offseason" };
+    }
+    if (!["league", "championship", "offseason"].includes(next.phase)) {
+      next = { ...next, phase: "league" };
+    }
+    return events.length ? withLog(next, events) : next;
   }
 
   // ---------- Player actions ----------
@@ -532,6 +556,6 @@
     nextChampionshipFixture, playChampionshipMatch,
     startNextSeason,
     upgradeAttribute, restUp,
-    markGameSeen, toggleSetting, awardAchievements,
+    markGameSeen, toggleSetting, awardAchievements, reconcile,
   };
 })();

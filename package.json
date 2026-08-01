@@ -2,15 +2,16 @@
   "name": "gaa-career",
   "version": "1.0.0",
   "private": true,
-  "description": "A skill-based Gaelic football career game — Junior B to the All-Ireland.",
+  "description": "A skill-based Gaelic football career game \u2014 Junior B to the All-Ireland.",
   "license": "UNLICENSED",
   "scripts": {
-    "build": "node build.js",
+    "build": "node tools/test-career.js && node build.js",
     "assets": "python3 tools/make-assets.py && npx @capacitor/assets generate --iconBackgroundColor '#1B5E3A' --iconBackgroundColorDark '#1B5E3A' --splashBackgroundColor '#0E1116' --splashBackgroundColorDark '#0E1116'",
     "serve": "node build.js && npx --yes http-server www -p 8080 -c-1",
     "sync": "node build.js && npx cap sync",
     "android": "npm run sync && npx cap open android",
-    "ios": "npm run sync && npx cap open ios"
+    "ios": "npm run sync && npx cap open ios",
+    "test": "node tools/test-career.js"
   },
   "devDependencies": {
     "@capacitor/assets": "^3.0.5",
