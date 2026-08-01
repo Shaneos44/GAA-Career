@@ -72,11 +72,19 @@
     },
     {
       title: "Energy & injuries",
-      body: "Every match drains energy. Play on empty and you perform worse and risk a knock that rules you out for a game or two. <b>Rest Up</b> to recover — there's no limit on how often you rest.",
+      body: "Every match drains energy. Play on empty and you perform worse and risk a knock that rules you out for a game or two. Resting recovers it, but costs you the fixture.",
     },
     {
       title: "Training",
       body: "Matches earn training points, scaled by how well you actually played. Spend them on attributes in the <b>Player</b> tab. Each level costs more than the last, and higher attributes widen the timing windows in every mini-game.",
+    },
+    {
+      title: "Drills",
+      body: "The <b>Train</b> tab gives you three sessions between fixtures. Each drill runs the mini-game it mirrors and pays training points for how well you do it — and a really sharp session can lift the attribute on its own. Drills cost energy, and the sessions refresh once the next fixture is played.",
+    },
+    {
+      title: "Sitting one out",
+      body: "<b>Rest Up</b> is not a free top-up. The fixture is played without you and goes on the record — your side is weaker for your absence, and in the championship a defeat still ends your season. Use it to recover energy or to sit out an injury, knowing it costs you the game.",
     },
     {
       title: "The top",

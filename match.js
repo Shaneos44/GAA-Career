@@ -359,5 +359,80 @@
     }
   }
 
-  window.GaaMatch = { start, practice };
+  /**
+   * Runs one training drill: the same mini-game as the match situation it
+   * mirrors, but the payout is training points rather than a scoreline.
+   */
+  async function drill(state, G, drillKey, onComplete) {
+    A.unlock();
+    const d = G.DRILLS.find((x) => x.key === drillKey);
+    const g = GD.byKey[drillKey];
+    if (!d) return;
+
+    const overlay = document.createElement("div");
+    overlay.className = "gf-match-overlay";
+    overlay.innerHTML = `
+      <div class="gf-match-card">
+        <div class="gf-match-head">
+          <button class="gf-quit" data-action="quit" aria-label="Leave training">✕</button>
+          <div class="gf-match-tier">Training · costs ${d.energy} energy</div>
+          <div class="gf-match-vs solo"><span class="team you">${g.icon} ${d.label}</span></div>
+        </div>
+        <div class="gf-pitch">
+          <div class="gf-pitch-stripes"></div>
+          <div class="gf-goal"></div>
+          <div class="gf-card-inner"></div>
+        </div>
+        <div class="gf-moment-ticker"></div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+
+    let left = false;
+    overlay.querySelector('[data-action="quit"]').addEventListener("click", () => {
+      left = true;
+      overlay.remove();
+      onComplete(state);            // abandoned drills cost nothing
+    });
+
+    const cardInner = overlay.querySelector(".gf-card-inner");
+    const ticker = overlay.querySelector(".gf-moment-ticker");
+
+    // Explain the mini-game here too, if this is where they meet it first.
+    let working = state;
+    if (g && !(working.seenGames || {})[drillKey]) {
+      await GD.coachCard(g);
+      if (left) return;
+      working = G.markGameSeen(working, drillKey);
+    }
+
+    const fn = drillKey === "catch" ? EVENTS.catch_ : EVENTS[drillKey];
+    const ev = await fn(cardInner, working, ticker);
+    if (left) return;
+
+    const next = G.trainDrill(working, drillKey, ev.score);
+    const res = next.lastDrill || { earned: 0, score: ev.score };
+    if (res.breakthrough) { A.trophy(); C.burst({ particleCount: 70, duration: 1600 }); }
+
+    overlay.querySelector(".gf-match-card").innerHTML = `
+      <div class="gf-fulltime">
+        <div class="gf-fulltime-label">Session complete</div>
+        <div class="gf-practice-score r-${M.rate(ev.score)}">${ev.score}<small>/100</small></div>
+        ${res.breakthrough
+          ? `<div class="gf-motm-banner gold">⬆ ${res.attrLabel} improved!</div>`
+          : ""}
+        <div class="gf-rewards">
+          <div class="gf-reward"><div class="n">+${res.earned}</div><div class="l">Training pts</div></div>
+          <div class="gf-reward"><div class="n">${next.trainingSessions}</div><div class="l">Sessions left</div></div>
+        </div>
+        <button class="btn btn-primary" data-action="drill-done">Continue</button>
+      </div>
+    `;
+    overlay.querySelector('[data-action="drill-done"]').addEventListener("click", () => {
+      overlay.remove();
+      onComplete(next);
+    });
+  }
+
+  window.GaaMatch = { start, practice, drill };
 })();

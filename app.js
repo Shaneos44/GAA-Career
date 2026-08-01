@@ -82,6 +82,24 @@
           <p class="dim small" style="margin-top:10px">Your position decides which match situations you face.</p>
         </div>
 
+        <div class="panel">
+          <label>Kit &amp; Number</label>
+          <div class="gf-kit-grid">
+            ${G.KITS.map((k, i) => `
+              <button class="gf-kit ${i === 0 ? "on" : ""}" data-setup-kit="${k.key}"
+                      title="${esc(k.label)}" aria-label="${esc(k.label)}">
+                <span class="sw" style="--kit:${k.primary};--kit2:${k.secondary}"></span>
+                <em>${esc(k.label)}</em>
+              </button>`).join("")}
+          </div>
+          <div class="gf-num-row" style="margin-top:14px">
+            <span class="gf-jersey" id="setup-jersey"
+                  style="--kit:${G.KITS[0].primary};--kit2:${G.KITS[0].secondary};width:52px;height:52px"><span>15</span></span>
+            <input id="f-squad-setup" type="number" min="1" max="40" value="15"
+                   inputmode="numeric" aria-label="Squad number" />
+          </div>
+        </div>
+
         <button class="btn btn-primary btn-lg" data-action="start">Start Career</button>
       </div>
     `;
@@ -93,12 +111,31 @@
         app.querySelectorAll(".gf-pos").forEach((b) => b.classList.toggle("on", b === btn));
       });
     });
+
+    let chosenKit = G.KITS[0].key;
+    const jersey = app.querySelector("#setup-jersey");
+    const squadInput = app.querySelector("#f-squad-setup");
+    app.querySelectorAll("[data-setup-kit]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        chosenKit = btn.dataset.setupKit;
+        const k = G.KITS.find((x) => x.key === chosenKit);
+        app.querySelectorAll("[data-setup-kit]").forEach((b) => b.classList.toggle("on", b === btn));
+        jersey.style.setProperty("--kit", k.primary);
+        jersey.style.setProperty("--kit2", k.secondary);
+      });
+    });
+    squadInput.addEventListener("input", () => {
+      jersey.querySelector("span").textContent = squadInput.value || "15";
+    });
+
     app.querySelector('[data-action="start"]').addEventListener("click", () => {
       setState(G.createCareer({
         name: document.getElementById("f-name").value,
         club: document.getElementById("f-club").value,
         county: document.getElementById("f-county").value,
         positionKey: chosen,
+        kitKey: chosenKit,
+        squadNumber: squadInput.value,
       }));
     });
   }
@@ -115,7 +152,10 @@
           <div class="gf-title">${esc(state.name)}</div>
           <div class="gf-sub">${esc(pos.label)} · ${esc(G.teamName(state))} · ${esc(tier.label)}</div>
         </div>
-        <div class="gf-ovr" title="Overall rating"><span>${overall}</span><small>OVR</small></div>
+        <div class="gf-headright">
+          ${jerseyHtml(28)}
+          <div class="gf-ovr" title="Overall rating"><span>${overall}</span><small>OVR</small></div>
+        </div>
       </header>
       <div class="gf-statstrip">
         <div class="gf-stat"><span class="l">Season</span><span class="v">${state.season}</span></div>
@@ -124,6 +164,16 @@
         <div class="gf-stat"><span class="l">Form</span><span class="v">${formHtml()}</span></div>
       </div>
     `;
+  }
+
+  /** Kit-coloured jersey with the squad number on it. */
+  function jerseyHtml(size) {
+    const kit = G.kitOf(state);
+    return `
+      <span class="gf-jersey" style="--kit:${kit.primary};--kit2:${kit.secondary};width:${size}px;height:${size}px"
+            title="${esc(kit.label)} · No. ${state.squadNumber}">
+        <span>${state.squadNumber}</span>
+      </span>`;
   }
 
   function formHtml() {
@@ -323,7 +373,94 @@
       </div>
 
       <div class="panel">
+        <div class="gf-row-between"><span class="k">Your Kit</span></div>
+        <div class="gf-kit-grid">
+          ${G.KITS.map((k) => `
+            <button class="gf-kit ${k.key === state.kit ? "on" : ""}" data-action="kit" data-key="${k.key}"
+                    title="${esc(k.label)}" aria-label="${esc(k.label)}">
+              <span class="sw" style="--kit:${k.primary};--kit2:${k.secondary}"></span>
+              <em>${esc(k.label)}</em>
+            </button>`).join("")}
+        </div>
+
+        <div class="gf-row-between" style="margin-top:16px"><span class="k">Squad Number</span></div>
+        <div class="gf-num-row">
+          ${jerseyHtml(52)}
+          <input id="f-squad" type="number" min="1" max="40" value="${state.squadNumber}"
+                 inputmode="numeric" aria-label="Squad number" />
+        </div>
+
+        <div class="gf-row-between" style="margin-top:16px"><span class="k">Position</span></div>
+        <div class="gf-pos-grid">
+          ${G.POSITIONS.map((p) => `
+            <button class="gf-pos ${p.key === state.position ? "on" : ""}" data-action="position" data-key="${p.key}">
+              <span class="n">${esc(p.label)}</span>
+              <span class="b">${esc(p.blurb)}</span>
+            </button>`).join("")}
+        </div>
+        <p class="dim small" style="margin-top:10px">
+          Switching position changes which situations you face in a match.
+        </p>
+      </div>
+
+      <div class="panel">
         <button class="btn btn-quiet" data-action="reset">Retire &amp; start a new career</button>
+      </div>
+    `;
+  }
+
+  // ---------- Training tab ----------
+
+  function trainTabHtml() {
+    const left = state.trainingSessions == null ? G.SESSIONS_PER_ROUND : state.trainingSessions;
+    const injured = !!state.injury;
+
+    return `
+      <div class="panel">
+        <div class="gf-row-between">
+          <span class="k">Sessions this week</span>
+          <span class="gf-tp">${left} of ${G.SESSIONS_PER_ROUND} left</span>
+        </div>
+        <div class="gf-session-dots">
+          ${Array.from({ length: G.SESSIONS_PER_ROUND }, (_, i) =>
+            `<i class="${i < left ? "on" : ""}"></i>`).join("")}
+        </div>
+        <p class="dim small" style="margin:10px 0 0">
+          Drills earn training points and can sharpen the attribute outright.
+          Sessions refresh when the next fixture is played.
+        </p>
+      </div>
+
+      ${energyHtml()}
+
+      ${injured ? `<div class="panel"><p class="gf-blocked" style="margin:0">
+        Injured — ${esc(state.injury.label)}. No training until you're right. Rest up on the Season tab.
+      </p></div>` : ""}
+
+      <div class="panel">
+        <div class="gf-row-between"><span class="k">Drills</span></div>
+        <div class="gf-drills">
+          ${G.DRILLS.map((d) => {
+            const g = GD.byKey[d.key] || {};
+            const attr = G.ATTRS.find((a) => a.key === d.attr) || {};
+            const can = left > 0 && !injured && state.energy >= d.energy;
+            return `
+              <button class="gf-drill" data-action="drill" data-key="${d.key}" ${can ? "" : "disabled"}>
+                <span class="ic">${g.icon || "⚽"}</span>
+                <span class="tx">
+                  <b>${esc(d.label)}</b>
+                  <small>${esc(d.blurb)}</small>
+                </span>
+                <span class="meta">
+                  <em>${esc(attr.label || d.attr)}</em>
+                  <i>−${d.energy}⚡</i>
+                </span>
+              </button>`;
+          }).join("")}
+        </div>
+        ${left <= 0 ? `<p class="dim small" style="margin:12px 0 0">
+          No sessions left. Play or sit out the next fixture to refresh them.
+        </p>` : ""}
       </div>
     `;
   }
@@ -403,6 +540,7 @@
     if (state.phase === "offseason") tab = "season";
 
     const body = tab === "table" ? tableTabHtml()
+      : tab === "train" ? trainTabHtml()
       : tab === "player" ? playerTabHtml()
       : tab === "guide" ? guideTabHtml()
       : seasonTabHtml();
@@ -416,6 +554,7 @@
         <nav class="gf-tabbar">
           <button class="gf-tabbtn ${tab === "season" ? "on" : ""}" data-tab="season"><span>🏟️</span>Season</button>
           <button class="gf-tabbtn ${tab === "table" ? "on" : ""}" data-tab="table"><span>📊</span>Table</button>
+          <button class="gf-tabbtn ${tab === "train" ? "on" : ""}" data-tab="train"><span>🏋️</span>Train</button>
           <button class="gf-tabbtn ${tab === "player" ? "on" : ""}" data-tab="player"><span>👤</span>Player</button>
           <button class="gf-tabbtn ${tab === "guide" ? "on" : ""}" data-tab="guide"><span>📖</span>Guide</button>
         </nav>
@@ -458,6 +597,23 @@
     app.querySelectorAll('[data-action="toggle"]').forEach((btn) => {
       btn.addEventListener("click", () => setState(G.toggleSetting(state, btn.dataset.key)));
     });
+
+    app.querySelectorAll('[data-action="drill"]').forEach((btn) => {
+      btn.addEventListener("click", () => window.GaaMatch.drill(state, G, btn.dataset.key, setState));
+    });
+
+    app.querySelectorAll('[data-action="kit"]').forEach((btn) => {
+      btn.addEventListener("click", () => setState(G.setKit(state, btn.dataset.key)));
+    });
+
+    app.querySelectorAll('[data-action="position"]').forEach((btn) => {
+      btn.addEventListener("click", () => setState(G.changePosition(state, btn.dataset.key)));
+    });
+
+    const squad = app.querySelector("#f-squad");
+    if (squad) {
+      squad.addEventListener("change", () => setState(G.setSquadNumber(state, squad.value)));
+    }
   }
 
   applySettings();

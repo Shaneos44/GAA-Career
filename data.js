@@ -64,6 +64,38 @@
 
   const TOP_TIER = TIERS.length - 1;
 
+  // Training sessions available between fixtures. Capping them keeps matches
+  // central — without a limit you could grind unlimited points and the whole
+  // progression curve collapses.
+  const SESSIONS_PER_ROUND = 3;
+
+  // Each drill runs one of the mini-games and trains the attribute behind it.
+  const DRILLS = [
+    { key: "shot",   label: "Shooting Drill", attr: "kicking",    energy: 8,  blurb: "Repetition off the ground and out of the hand." },
+    { key: "free",   label: "Free-Taking",    attr: "freeTaking", energy: 6,  blurb: "Placed balls from every angle." },
+    { key: "catch",  label: "Fielding Drill", attr: "fielding",   energy: 9,  blurb: "Rise for the dropping ball, over and over." },
+    { key: "tackle", label: "Tackling Drill", attr: "tackling",   energy: 9,  blurb: "Front-on tackling without giving the free." },
+    { key: "sprint", label: "Sprint Session", attr: "speed",      energy: 12, blurb: "Shuttles until the legs go." },
+    { key: "block",  label: "Blocking Drill", attr: "reflexes",   energy: 7,  blurb: "Reaction work on the goal line." },
+    { key: "pass",   label: "Passing Drill",  attr: "vision",     energy: 7,  blurb: "Picking the runner under pressure." },
+  ];
+
+  // Colour pairs only — no crest, badge or county mark anywhere.
+  const KITS = [
+    { key: "green-gold",   label: "Green & Gold",   primary: "#1B5E3A", secondary: "#F2C94C" },
+    { key: "sky-navy",     label: "Sky & Navy",     primary: "#3E8EDE", secondary: "#152A4A" },
+    { key: "red-white",    label: "Red & White",    primary: "#C0392B", secondary: "#F5F8FA" },
+    { key: "maroon-white", label: "Maroon & White", primary: "#7B2D3B", secondary: "#F5F8FA" },
+    { key: "black-amber",  label: "Black & Amber",  primary: "#1F1F22", secondary: "#F2A03D" },
+    { key: "navy-yellow",  label: "Navy & Yellow",  primary: "#152A4A", secondary: "#F2C94C" },
+    { key: "white-green",  label: "White & Green",  primary: "#E9EEF2", secondary: "#1B5E3A" },
+    { key: "purple-gold",  label: "Purple & Gold",  primary: "#5B2C6F", secondary: "#F2C94C" },
+  ];
+
+  function kitOf(state) {
+    return KITS.find((k) => k.key === state.kit) || KITS[0];
+  }
+
   function randInt(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
   }
@@ -96,7 +128,7 @@
     return { ...state, log: [...events.slice().reverse(), ...state.log].slice(0, 40) };
   }
 
-  function createCareer({ name, county, club, positionKey }) {
+  function createCareer({ name, county, club, positionKey, kitKey, squadNumber }) {
     const position = POSITIONS.find((p) => p.key === positionKey) || POSITIONS[0];
     const attributes = {};
     ATTRS.forEach((a) => { attributes[a.key] = randInt(30, 40); });
@@ -111,7 +143,10 @@
       position: position.key,
       attributes,
       trainingPoints: 6,
+      trainingSessions: SESSIONS_PER_ROUND,
       energy: 100,
+      kit: (KITS.find((k) => k.key === kitKey) || KITS[0]).key,
+      squadNumber: Number(squadNumber) > 0 && Number(squadNumber) <= 40 ? Number(squadNumber) : 15,
       tierIndex: 0,
       season: 1,
       phase: "league",
@@ -308,7 +343,7 @@
     const league = JSON.parse(JSON.stringify(afterMatch.league));
     S.recordLeagueRound(league, summary.yourScore.total, summary.oppScore.total);
 
-    let next = { ...afterMatch, league };
+    let next = { ...afterMatch, league, trainingSessions: SESSIONS_PER_ROUND };
     next.lastMatchSummary = { ...summary, kind: "league" };
 
     if (S.leagueComplete(league)) {
@@ -415,7 +450,7 @@
     const champ = JSON.parse(JSON.stringify(afterMatch.championship));
     S.recordChampionshipResult(champ, result === "win");
 
-    let next = { ...afterMatch, championship: champ };
+    let next = { ...afterMatch, championship: champ, trainingSessions: SESSIONS_PER_ROUND };
     next.lastMatchSummary = { ...summary, kind: "championship", stageLabel: meta.label };
 
     if (champ.won) {
@@ -477,6 +512,7 @@
       energy: 100,
       injury: null,
       form: [],
+      trainingSessions: SESSIONS_PER_ROUND,
       career,
       trainingPoints: state.trainingPoints + 6,
       lastSeasonAllStar: wonAllStar,
@@ -530,16 +566,141 @@
     return withLog(upgraded, events);
   }
 
+  /**
+   * Sitting out is a real decision, not a free top-up: the fixture is played
+   * without you and goes on the record. Your side is weaker for your absence,
+   * and in the championship a defeat still ends the season.
+   */
   function restUp(state) {
     const events = [];
+    const tier = TIERS[state.tierIndex];
     const recovery = 35 + Math.round(state.attributes.stamina / 4);
+
     const injury = state.injury
       ? (state.injury.games > 1 ? { ...state.injury, games: state.injury.games - 1 } : null)
       : null;
-    if (state.injury && !injury) pushLog(events, { type: "info", text: "Passed fit — you're available again." });
-    else if (injury) pushLog(events, { type: "info", text: `Still carrying ${injury.label}. ${injury.games} game(s) to go.` });
-    else pushLog(events, { type: "info", text: "Recovery week — legs feel fresh again." });
-    return withLog({ ...state, energy: Math.min(100, state.energy + recovery), injury }, events);
+
+    let next = { ...state, energy: Math.min(100, state.energy + recovery), injury };
+
+    // Logged first so that, once withLog reverses the batch, the fixture
+    // result ends up on top — that is the news, not the rest itself.
+    if (state.injury && !injury) {
+      pushLog(events, { type: "info", text: "Passed fit — you're available again." });
+    } else if (injury) {
+      pushLog(events, { type: "info", text: `Still carrying ${injury.label}. ${injury.games} game(s) to go.` });
+    } else {
+      pushLog(events, { type: "info", text: "A week off the legs — you feel fresh again." });
+    }
+
+    const isChamp = state.phase === "championship";
+    const meta = isChamp ? nextChampionshipFixture(state) : nextLeagueFixture(state);
+
+    if (meta) {
+      // Your club without you: a mid-division side missing its best player.
+      const teamScore = S.genScoreline(tier.oppBase - 4 + randInt(-5, 5));
+      const oppScore = S.genScoreline(meta.oppStrength + randInt(-5, 5));
+      const result = teamScore.total > oppScore.total ? "win"
+        : teamScore.total < oppScore.total ? "loss" : "draw";
+      const verb = result === "win" ? "beat" : result === "loss" ? "lost to" : "drew with";
+
+      pushLog(events, {
+        type: result === "win" ? "win" : result === "loss" ? "loss" : "draw",
+        text: `You sat this one out. ${meta.label}: ${teamName(state)} ${scoreString(teamScore)} ${verb} ${meta.oppName} ${scoreString(oppScore)}.`,
+      });
+
+      if (isChamp) {
+        let won = result === "win";
+        if (result === "draw") {
+          won = Math.random() < 0.5;
+          pushLog(events, { type: "final", text: "Level at full time — settled in extra time." });
+        }
+        const champ = JSON.parse(JSON.stringify(next.championship));
+        S.recordChampionshipResult(champ, won);
+        next = { ...next, championship: champ };
+        if (champ.won) {
+          const career = { ...next.career, championships: next.career.championships + 1 };
+          if (tier.isTop) career.allIrelands += 1;
+          next = { ...next, career, doubleWon: next.doubleWon || state.leagueFinishPos === 1 };
+          pushLog(events, { type: "trophy",
+            text: tier.isTop
+              ? `${state.county} are All-Ireland Champions — won without you on the field.`
+              : `${tier.champLabel} won, though you watched this one from the line.` });
+        } else if (champ.eliminated) {
+          pushLog(events, { type: "loss", text: `Knocked out of the ${tier.champLabel}. Season over.` });
+        }
+        if (S.championshipComplete(champ)) next = { ...next, phase: "offseason" };
+      } else {
+        const league = JSON.parse(JSON.stringify(next.league));
+        S.recordLeagueRound(league, teamScore.total, oppScore.total);
+        next = { ...next, league };
+        if (S.leagueComplete(league)) next = concludeLeague(next, events);
+      }
+    }
+
+    next = { ...next, trainingSessions: SESSIONS_PER_ROUND };
+    next = awardAchievements(next, events);
+    return withLog(next, events);
+  }
+
+  /**
+   * Banks a completed drill. Sessions are the limiter, energy is the cost,
+   * and the payout scales with how well the drill was actually performed —
+   * a sloppy session is close to a waste of a week.
+   */
+  function trainDrill(state, drillKey, score) {
+    const drill = DRILLS.find((d) => d.key === drillKey);
+    if (!drill) return state;
+    if ((state.trainingSessions || 0) <= 0) return state;
+
+    const events = [];
+    const earned = Math.max(1, Math.round(score / 22));
+    const attrValue = state.attributes[drill.attr];
+    const attrLabel = (ATTRS.find((a) => a.key === drill.attr) || {}).label || drill.attr;
+
+    let attributes = state.attributes;
+    // A genuinely sharp session can move the needle on its own.
+    const breakthrough = score >= 88 && attrValue < 99 && Math.random() < 0.35;
+    if (breakthrough) {
+      attributes = { ...attributes, [drill.attr]: attrValue + 1 };
+    }
+
+    pushLog(events, {
+      type: "train",
+      text: breakthrough
+        ? `${drill.label}: sharp session — +${earned} training pts and ${attrLabel} up to ${attrValue + 1}.`
+        : `${drill.label}: +${earned} training pts.`,
+    });
+
+    let next = {
+      ...state,
+      attributes,
+      trainingPoints: state.trainingPoints + earned,
+      trainingSessions: state.trainingSessions - 1,
+      energy: Math.max(0, state.energy - drill.energy),
+    };
+    next.lastDrill = { label: drill.label, score, earned, breakthrough, attrLabel };
+    next = awardAchievements(next, events);
+    return withLog(next, events);
+  }
+
+  function setKit(state, kitKey) {
+    if (!KITS.some((k) => k.key === kitKey)) return state;
+    return { ...state, kit: kitKey };
+  }
+
+  function setSquadNumber(state, n) {
+    const num = Number(n);
+    if (!Number.isFinite(num) || num < 1 || num > 40) return state;
+    return { ...state, squadNumber: Math.round(num) };
+  }
+
+  /** Switching position mid-career changes which situations you face. */
+  function changePosition(state, positionKey) {
+    const pos = POSITIONS.find((p) => p.key === positionKey);
+    if (!pos || pos.key === state.position) return state;
+    const events = [];
+    pushLog(events, { type: "info", text: `Moved to ${pos.label}. Different jobs, different situations.` });
+    return withLog({ ...state, position: pos.key }, events);
   }
 
   function ordinal(n) {
@@ -550,6 +711,8 @@
 
   window.GaaCareer = {
     COUNTIES, ATTRS, POSITIONS, TIERS, TOP_TIER,
+    DRILLS, KITS, SESSIONS_PER_ROUND, kitOf,
+    trainDrill, setKit, setSquadNumber, changePosition,
     computeOverall, upgradeCost, createCareer, teamName, scoreString, ordinal,
     resolvePlayerEvents,
     nextLeagueFixture, playLeagueMatch,

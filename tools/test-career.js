@@ -149,5 +149,62 @@ while (floorState.season <= 6 && g3++ < 3000) {
 }
 console.log(`  floor: ended at ${G.TIERS[floorState.tierIndex].label}`);
 
+// ---- Resting must cost the fixture, not hand out free energy ----
+console.log("Resting");
+{
+  let r = G.createCareer({ name: "Rest", county: "Mayo", club: "X", positionKey: "mf" });
+  r = { ...r, energy: 20 };
+  const roundBefore = r.league.round;
+  const playedBefore = r.league.table.reduce((n, t) => n + t.p, 0);
+  r = G.restUp(r);
+  check("rest advances the league round", r.league.round === roundBefore + 1,
+    `${roundBefore} -> ${r.league.round}`);
+  check("rest plays every fixture in the round",
+    r.league.table.reduce((n, t) => n + t.p, 0) === playedBefore + S.TEAMS_PER_DIVISION);
+  check("rest restores energy", r.energy > 20, String(r.energy));
+  check("rest does not count as an appearance", r.career.matches === 0, String(r.career.matches));
+
+  // Resting a whole season must still reach the championship and the off-season.
+  let all = G.createCareer({ name: "Rester", county: "Mayo", club: "Y", positionKey: "ff" });
+  for (let i = 0; i < S.LEAGUE_ROUNDS; i++) all = G.restUp(all);
+  check("resting the full league still concludes it", all.phase === "championship", all.phase);
+  let g = 0;
+  while (all.phase === "championship" && g++ < 8) all = G.restUp(all);
+  check("resting the championship still ends the season", all.phase === "offseason", all.phase);
+  all = G.startNextSeason(all);
+  check("a fully rested season still rolls over", all.season === 2 && all.phase === "league");
+  console.log("  rest advances fixtures, concludes the league and rolls the season over");
+}
+
+// ---- Training is capped so points cannot be farmed ----
+console.log("Training");
+{
+  let t = G.createCareer({ name: "Trainer", county: "Mayo", club: "Z", positionKey: "mf" });
+  check("starts with a full session allowance", t.trainingSessions === G.SESSIONS_PER_ROUND);
+  const tpStart = t.trainingPoints;
+  const energyStart = t.energy;
+
+  for (let i = 0; i < G.SESSIONS_PER_ROUND; i++) t = G.trainDrill(t, "shot", 90);
+  check("each drill consumes a session", t.trainingSessions === 0, String(t.trainingSessions));
+  check("drills earn training points", t.trainingPoints > tpStart);
+  check("drills cost energy", t.energy < energyStart);
+
+  const before = t.trainingPoints;
+  t = G.trainDrill(t, "shot", 99);
+  check("training is blocked with no sessions left", t.trainingPoints === before);
+
+  // Playing a fixture refreshes the allowance.
+  t = G.playLeagueMatch(t, G.resolvePlayerEvents([{ type: "shot", score: 60 }]));
+  check("a fixture refreshes the allowance", t.trainingSessions === G.SESSIONS_PER_ROUND);
+
+  // A weak drill must be worth less than a sharp one.
+  let a = G.createCareer({ name: "A", county: "Mayo", club: "Z", positionKey: "mf" });
+  let b = G.createCareer({ name: "B", county: "Mayo", club: "Z", positionKey: "mf" });
+  const weak = G.trainDrill(a, "pass", 10).trainingPoints - a.trainingPoints;
+  const sharp = G.trainDrill(b, "pass", 95).trainingPoints - b.trainingPoints;
+  check("a sharp drill pays more than a sloppy one", sharp > weak, `${sharp} vs ${weak}`);
+  console.log(`  sessions capped at ${G.SESSIONS_PER_ROUND}; sloppy drill ${weak} pts, sharp drill ${sharp} pts`);
+}
+
 console.log(failures === 0 ? "\nAll career checks passed." : `\n${failures} check(s) FAILED.`);
 process.exit(failures === 0 ? 0 : 1);

@@ -55,12 +55,25 @@ You don't have to read any of this to play — the game teaches itself:
 - **Practice mode.** Drill any mini-game on repeat from the Guide tab, with
   nothing at stake and no effect on your career.
 
+## Training
+
+The **Train** tab gives you three sessions between fixtures. Each drill runs
+the mini-game it mirrors and pays training points for how well you actually
+perform it; a really sharp session can lift the attribute outright. Drills cost
+energy, and sessions refresh once the next fixture is played — so training
+competes with match readiness rather than replacing it.
+
 ## Other systems
 
 - **Energy** drains each match and recovers with rest. Play on empty and you
   perform worse and risk picking up a knock that rules you out for a game or two.
-- **Training points** are earned from matches, scaled by your performance
-  rating, and spent levelling attributes. Each level costs more than the last.
+- **Resting costs you the fixture.** It is played without you and goes on the
+  record — your side is weaker for your absence, and a championship defeat
+  still ends the season.
+- **Customisation** — kit colours, squad number, and you can switch position
+  mid-career.
+- **Training points** are earned from matches and drills, scaled by how well
+  you played, and spent levelling attributes. Each level costs more than the last.
 - **Season objectives.** The manager sets a target each year — top 3, top 2,
   or win the division, depending on your level. Hit it for a training-point bonus.
 - **16 achievements**, from your first goal to Sam Maguire.

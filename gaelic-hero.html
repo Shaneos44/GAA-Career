@@ -600,6 +600,80 @@ input:focus, select:focus {
 .gf-practice-score.r-good { color: var(--gold); }
 .gf-practice-score.r-miss { color: var(--bad); }
 
+/* ================= Training, kit & squad number ================= */
+
+/* Five tabs now. */
+.gf-tabbar { grid-template-columns: repeat(5, 1fr); }
+.gf-tabbtn { font-size: 9.5px; }
+.gf-tabbtn span { font-size: 17px; }
+
+/* --- Jersey chip: kit colours + squad number --- */
+.gf-headright { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.gf-jersey {
+  position: relative; display: inline-grid; place-items: center; flex-shrink: 0;
+  background: var(--kit); border-radius: 5px 5px 7px 7px;
+  border: 1px solid rgba(255,255,255,.18);
+  /* Shoulders, so it reads as a jersey rather than a plain swatch. */
+  box-shadow: inset 0 -3px 0 color-mix(in srgb, var(--kit) 70%, #000),
+              inset 0 6px 0 -3px var(--kit2);
+}
+.gf-jersey > span {
+  font-family: var(--font-mono); font-weight: 700; line-height: 1;
+  font-size: .42em; color: var(--kit2);
+  text-shadow: 0 1px 2px rgba(0,0,0,.45);
+}
+
+/* --- Session allowance --- */
+.gf-session-dots { display: flex; gap: 6px; }
+.gf-session-dots i {
+  flex: 1; height: 8px; border-radius: 999px;
+  background: var(--surface-2); border: 1px solid var(--edge);
+}
+.gf-session-dots i.on { background: linear-gradient(90deg, var(--signal), var(--signal-lt)); border-color: transparent; }
+
+/* --- Drill list --- */
+.gf-drills { display: flex; flex-direction: column; gap: 8px; }
+.gf-drill {
+  display: flex; align-items: center; gap: 11px; width: 100%; text-align: left;
+  padding: 11px 12px; min-height: 62px; cursor: pointer;
+  background: var(--surface-2); border: 1px solid var(--edge);
+  border-radius: var(--r); color: var(--text);
+}
+.gf-drill:active:not(:disabled) { transform: scale(.99); }
+.gf-drill:disabled { opacity: .38; cursor: not-allowed; }
+.gf-drill .ic { font-size: 22px; line-height: 1; flex-shrink: 0; }
+.gf-drill .tx { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.gf-drill .tx b { font-size: 14px; font-weight: 700; }
+.gf-drill .tx small { font-size: 11.5px; color: var(--text-dim); line-height: 1.35; }
+.gf-drill .meta { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; flex-shrink: 0; }
+.gf-drill .meta em { font-style: normal; font-size: 10px; font-weight: 700; color: var(--signal-lt);
+                     text-transform: uppercase; letter-spacing: .04em; }
+.gf-drill .meta i { font-style: normal; font-family: var(--font-mono); font-size: 11px; color: var(--gold); }
+
+/* --- Kit picker --- */
+.gf-kit-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.gf-kit {
+  display: flex; flex-direction: column; align-items: center; gap: 5px;
+  padding: 9px 4px; cursor: pointer; border-radius: var(--r);
+  background: var(--surface-2); border: 1px solid var(--edge); color: var(--text-dim);
+}
+.gf-kit .sw {
+  width: 30px; height: 30px; border-radius: 5px 5px 7px 7px;
+  background: var(--kit); border: 1px solid rgba(255,255,255,.2);
+  box-shadow: inset 0 6px 0 -3px var(--kit2);
+}
+.gf-kit em { font-style: normal; font-size: 9px; line-height: 1.2; text-align: center; }
+.gf-kit.on { border-color: var(--signal); background: rgba(46,139,87,.16); color: var(--text); }
+
+/* --- Squad number --- */
+.gf-num-row { display: flex; align-items: center; gap: 12px; }
+.gf-num-row input { flex: 1; text-align: center; font-family: var(--font-mono); font-size: 18px; font-weight: 700; }
+
+@media (max-width: 359px) {
+  .gf-kit-grid { grid-template-columns: repeat(3, 1fr); }
+  .gf-tabbtn { font-size: 9px; }
+}
+
 /* Bundled build: system faces only — no network requests. */
 :root {
   --font-display: ui-sans-serif, system-ui, -apple-system, "Segoe UI Variable Display", "Segoe UI", Roboto, sans-serif;
@@ -958,6 +1032,38 @@ input:focus, select:focus {
 
   const TOP_TIER = TIERS.length - 1;
 
+  // Training sessions available between fixtures. Capping them keeps matches
+  // central — without a limit you could grind unlimited points and the whole
+  // progression curve collapses.
+  const SESSIONS_PER_ROUND = 3;
+
+  // Each drill runs one of the mini-games and trains the attribute behind it.
+  const DRILLS = [
+    { key: "shot",   label: "Shooting Drill", attr: "kicking",    energy: 8,  blurb: "Repetition off the ground and out of the hand." },
+    { key: "free",   label: "Free-Taking",    attr: "freeTaking", energy: 6,  blurb: "Placed balls from every angle." },
+    { key: "catch",  label: "Fielding Drill", attr: "fielding",   energy: 9,  blurb: "Rise for the dropping ball, over and over." },
+    { key: "tackle", label: "Tackling Drill", attr: "tackling",   energy: 9,  blurb: "Front-on tackling without giving the free." },
+    { key: "sprint", label: "Sprint Session", attr: "speed",      energy: 12, blurb: "Shuttles until the legs go." },
+    { key: "block",  label: "Blocking Drill", attr: "reflexes",   energy: 7,  blurb: "Reaction work on the goal line." },
+    { key: "pass",   label: "Passing Drill",  attr: "vision",     energy: 7,  blurb: "Picking the runner under pressure." },
+  ];
+
+  // Colour pairs only — no crest, badge or county mark anywhere.
+  const KITS = [
+    { key: "green-gold",   label: "Green & Gold",   primary: "#1B5E3A", secondary: "#F2C94C" },
+    { key: "sky-navy",     label: "Sky & Navy",     primary: "#3E8EDE", secondary: "#152A4A" },
+    { key: "red-white",    label: "Red & White",    primary: "#C0392B", secondary: "#F5F8FA" },
+    { key: "maroon-white", label: "Maroon & White", primary: "#7B2D3B", secondary: "#F5F8FA" },
+    { key: "black-amber",  label: "Black & Amber",  primary: "#1F1F22", secondary: "#F2A03D" },
+    { key: "navy-yellow",  label: "Navy & Yellow",  primary: "#152A4A", secondary: "#F2C94C" },
+    { key: "white-green",  label: "White & Green",  primary: "#E9EEF2", secondary: "#1B5E3A" },
+    { key: "purple-gold",  label: "Purple & Gold",  primary: "#5B2C6F", secondary: "#F2C94C" },
+  ];
+
+  function kitOf(state) {
+    return KITS.find((k) => k.key === state.kit) || KITS[0];
+  }
+
   function randInt(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
   }
@@ -990,7 +1096,7 @@ input:focus, select:focus {
     return { ...state, log: [...events.slice().reverse(), ...state.log].slice(0, 40) };
   }
 
-  function createCareer({ name, county, club, positionKey }) {
+  function createCareer({ name, county, club, positionKey, kitKey, squadNumber }) {
     const position = POSITIONS.find((p) => p.key === positionKey) || POSITIONS[0];
     const attributes = {};
     ATTRS.forEach((a) => { attributes[a.key] = randInt(30, 40); });
@@ -1005,7 +1111,10 @@ input:focus, select:focus {
       position: position.key,
       attributes,
       trainingPoints: 6,
+      trainingSessions: SESSIONS_PER_ROUND,
       energy: 100,
+      kit: (KITS.find((k) => k.key === kitKey) || KITS[0]).key,
+      squadNumber: Number(squadNumber) > 0 && Number(squadNumber) <= 40 ? Number(squadNumber) : 15,
       tierIndex: 0,
       season: 1,
       phase: "league",
@@ -1202,7 +1311,7 @@ input:focus, select:focus {
     const league = JSON.parse(JSON.stringify(afterMatch.league));
     S.recordLeagueRound(league, summary.yourScore.total, summary.oppScore.total);
 
-    let next = { ...afterMatch, league };
+    let next = { ...afterMatch, league, trainingSessions: SESSIONS_PER_ROUND };
     next.lastMatchSummary = { ...summary, kind: "league" };
 
     if (S.leagueComplete(league)) {
@@ -1309,7 +1418,7 @@ input:focus, select:focus {
     const champ = JSON.parse(JSON.stringify(afterMatch.championship));
     S.recordChampionshipResult(champ, result === "win");
 
-    let next = { ...afterMatch, championship: champ };
+    let next = { ...afterMatch, championship: champ, trainingSessions: SESSIONS_PER_ROUND };
     next.lastMatchSummary = { ...summary, kind: "championship", stageLabel: meta.label };
 
     if (champ.won) {
@@ -1371,6 +1480,7 @@ input:focus, select:focus {
       energy: 100,
       injury: null,
       form: [],
+      trainingSessions: SESSIONS_PER_ROUND,
       career,
       trainingPoints: state.trainingPoints + 6,
       lastSeasonAllStar: wonAllStar,
@@ -1424,16 +1534,141 @@ input:focus, select:focus {
     return withLog(upgraded, events);
   }
 
+  /**
+   * Sitting out is a real decision, not a free top-up: the fixture is played
+   * without you and goes on the record. Your side is weaker for your absence,
+   * and in the championship a defeat still ends the season.
+   */
   function restUp(state) {
     const events = [];
+    const tier = TIERS[state.tierIndex];
     const recovery = 35 + Math.round(state.attributes.stamina / 4);
+
     const injury = state.injury
       ? (state.injury.games > 1 ? { ...state.injury, games: state.injury.games - 1 } : null)
       : null;
-    if (state.injury && !injury) pushLog(events, { type: "info", text: "Passed fit — you're available again." });
-    else if (injury) pushLog(events, { type: "info", text: `Still carrying ${injury.label}. ${injury.games} game(s) to go.` });
-    else pushLog(events, { type: "info", text: "Recovery week — legs feel fresh again." });
-    return withLog({ ...state, energy: Math.min(100, state.energy + recovery), injury }, events);
+
+    let next = { ...state, energy: Math.min(100, state.energy + recovery), injury };
+
+    // Logged first so that, once withLog reverses the batch, the fixture
+    // result ends up on top — that is the news, not the rest itself.
+    if (state.injury && !injury) {
+      pushLog(events, { type: "info", text: "Passed fit — you're available again." });
+    } else if (injury) {
+      pushLog(events, { type: "info", text: `Still carrying ${injury.label}. ${injury.games} game(s) to go.` });
+    } else {
+      pushLog(events, { type: "info", text: "A week off the legs — you feel fresh again." });
+    }
+
+    const isChamp = state.phase === "championship";
+    const meta = isChamp ? nextChampionshipFixture(state) : nextLeagueFixture(state);
+
+    if (meta) {
+      // Your club without you: a mid-division side missing its best player.
+      const teamScore = S.genScoreline(tier.oppBase - 4 + randInt(-5, 5));
+      const oppScore = S.genScoreline(meta.oppStrength + randInt(-5, 5));
+      const result = teamScore.total > oppScore.total ? "win"
+        : teamScore.total < oppScore.total ? "loss" : "draw";
+      const verb = result === "win" ? "beat" : result === "loss" ? "lost to" : "drew with";
+
+      pushLog(events, {
+        type: result === "win" ? "win" : result === "loss" ? "loss" : "draw",
+        text: `You sat this one out. ${meta.label}: ${teamName(state)} ${scoreString(teamScore)} ${verb} ${meta.oppName} ${scoreString(oppScore)}.`,
+      });
+
+      if (isChamp) {
+        let won = result === "win";
+        if (result === "draw") {
+          won = Math.random() < 0.5;
+          pushLog(events, { type: "final", text: "Level at full time — settled in extra time." });
+        }
+        const champ = JSON.parse(JSON.stringify(next.championship));
+        S.recordChampionshipResult(champ, won);
+        next = { ...next, championship: champ };
+        if (champ.won) {
+          const career = { ...next.career, championships: next.career.championships + 1 };
+          if (tier.isTop) career.allIrelands += 1;
+          next = { ...next, career, doubleWon: next.doubleWon || state.leagueFinishPos === 1 };
+          pushLog(events, { type: "trophy",
+            text: tier.isTop
+              ? `${state.county} are All-Ireland Champions — won without you on the field.`
+              : `${tier.champLabel} won, though you watched this one from the line.` });
+        } else if (champ.eliminated) {
+          pushLog(events, { type: "loss", text: `Knocked out of the ${tier.champLabel}. Season over.` });
+        }
+        if (S.championshipComplete(champ)) next = { ...next, phase: "offseason" };
+      } else {
+        const league = JSON.parse(JSON.stringify(next.league));
+        S.recordLeagueRound(league, teamScore.total, oppScore.total);
+        next = { ...next, league };
+        if (S.leagueComplete(league)) next = concludeLeague(next, events);
+      }
+    }
+
+    next = { ...next, trainingSessions: SESSIONS_PER_ROUND };
+    next = awardAchievements(next, events);
+    return withLog(next, events);
+  }
+
+  /**
+   * Banks a completed drill. Sessions are the limiter, energy is the cost,
+   * and the payout scales with how well the drill was actually performed —
+   * a sloppy session is close to a waste of a week.
+   */
+  function trainDrill(state, drillKey, score) {
+    const drill = DRILLS.find((d) => d.key === drillKey);
+    if (!drill) return state;
+    if ((state.trainingSessions || 0) <= 0) return state;
+
+    const events = [];
+    const earned = Math.max(1, Math.round(score / 22));
+    const attrValue = state.attributes[drill.attr];
+    const attrLabel = (ATTRS.find((a) => a.key === drill.attr) || {}).label || drill.attr;
+
+    let attributes = state.attributes;
+    // A genuinely sharp session can move the needle on its own.
+    const breakthrough = score >= 88 && attrValue < 99 && Math.random() < 0.35;
+    if (breakthrough) {
+      attributes = { ...attributes, [drill.attr]: attrValue + 1 };
+    }
+
+    pushLog(events, {
+      type: "train",
+      text: breakthrough
+        ? `${drill.label}: sharp session — +${earned} training pts and ${attrLabel} up to ${attrValue + 1}.`
+        : `${drill.label}: +${earned} training pts.`,
+    });
+
+    let next = {
+      ...state,
+      attributes,
+      trainingPoints: state.trainingPoints + earned,
+      trainingSessions: state.trainingSessions - 1,
+      energy: Math.max(0, state.energy - drill.energy),
+    };
+    next.lastDrill = { label: drill.label, score, earned, breakthrough, attrLabel };
+    next = awardAchievements(next, events);
+    return withLog(next, events);
+  }
+
+  function setKit(state, kitKey) {
+    if (!KITS.some((k) => k.key === kitKey)) return state;
+    return { ...state, kit: kitKey };
+  }
+
+  function setSquadNumber(state, n) {
+    const num = Number(n);
+    if (!Number.isFinite(num) || num < 1 || num > 40) return state;
+    return { ...state, squadNumber: Math.round(num) };
+  }
+
+  /** Switching position mid-career changes which situations you face. */
+  function changePosition(state, positionKey) {
+    const pos = POSITIONS.find((p) => p.key === positionKey);
+    if (!pos || pos.key === state.position) return state;
+    const events = [];
+    pushLog(events, { type: "info", text: `Moved to ${pos.label}. Different jobs, different situations.` });
+    return withLog({ ...state, position: pos.key }, events);
   }
 
   function ordinal(n) {
@@ -1444,6 +1679,8 @@ input:focus, select:focus {
 
   window.GaaCareer = {
     COUNTIES, ATTRS, POSITIONS, TIERS, TOP_TIER,
+    DRILLS, KITS, SESSIONS_PER_ROUND, kitOf,
+    trainDrill, setKit, setSquadNumber, changePosition,
     computeOverall, upgradeCost, createCareer, teamName, scoreString, ordinal,
     resolvePlayerEvents,
     nextLeagueFixture, playLeagueMatch,
@@ -1530,11 +1767,19 @@ input:focus, select:focus {
     },
     {
       title: "Energy & injuries",
-      body: "Every match drains energy. Play on empty and you perform worse and risk a knock that rules you out for a game or two. <b>Rest Up</b> to recover — there's no limit on how often you rest.",
+      body: "Every match drains energy. Play on empty and you perform worse and risk a knock that rules you out for a game or two. Resting recovers it, but costs you the fixture.",
     },
     {
       title: "Training",
       body: "Matches earn training points, scaled by how well you actually played. Spend them on attributes in the <b>Player</b> tab. Each level costs more than the last, and higher attributes widen the timing windows in every mini-game.",
+    },
+    {
+      title: "Drills",
+      body: "The <b>Train</b> tab gives you three sessions between fixtures. Each drill runs the mini-game it mirrors and pays training points for how well you do it — and a really sharp session can lift the attribute on its own. Drills cost energy, and the sessions refresh once the next fixture is played.",
+    },
+    {
+      title: "Sitting one out",
+      body: "<b>Rest Up</b> is not a free top-up. The fixture is played without you and goes on the record — your side is weaker for your absence, and in the championship a defeat still ends your season. Use it to recover energy or to sit out an injury, knowing it costs you the game.",
     },
     {
       title: "The top",
@@ -2526,7 +2771,82 @@ input:focus, select:focus {
     }
   }
 
-  window.GaaMatch = { start, practice };
+  /**
+   * Runs one training drill: the same mini-game as the match situation it
+   * mirrors, but the payout is training points rather than a scoreline.
+   */
+  async function drill(state, G, drillKey, onComplete) {
+    A.unlock();
+    const d = G.DRILLS.find((x) => x.key === drillKey);
+    const g = GD.byKey[drillKey];
+    if (!d) return;
+
+    const overlay = document.createElement("div");
+    overlay.className = "gf-match-overlay";
+    overlay.innerHTML = `
+      <div class="gf-match-card">
+        <div class="gf-match-head">
+          <button class="gf-quit" data-action="quit" aria-label="Leave training">✕</button>
+          <div class="gf-match-tier">Training · costs ${d.energy} energy</div>
+          <div class="gf-match-vs solo"><span class="team you">${g.icon} ${d.label}</span></div>
+        </div>
+        <div class="gf-pitch">
+          <div class="gf-pitch-stripes"></div>
+          <div class="gf-goal"></div>
+          <div class="gf-card-inner"></div>
+        </div>
+        <div class="gf-moment-ticker"></div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+
+    let left = false;
+    overlay.querySelector('[data-action="quit"]').addEventListener("click", () => {
+      left = true;
+      overlay.remove();
+      onComplete(state);            // abandoned drills cost nothing
+    });
+
+    const cardInner = overlay.querySelector(".gf-card-inner");
+    const ticker = overlay.querySelector(".gf-moment-ticker");
+
+    // Explain the mini-game here too, if this is where they meet it first.
+    let working = state;
+    if (g && !(working.seenGames || {})[drillKey]) {
+      await GD.coachCard(g);
+      if (left) return;
+      working = G.markGameSeen(working, drillKey);
+    }
+
+    const fn = drillKey === "catch" ? EVENTS.catch_ : EVENTS[drillKey];
+    const ev = await fn(cardInner, working, ticker);
+    if (left) return;
+
+    const next = G.trainDrill(working, drillKey, ev.score);
+    const res = next.lastDrill || { earned: 0, score: ev.score };
+    if (res.breakthrough) { A.trophy(); C.burst({ particleCount: 70, duration: 1600 }); }
+
+    overlay.querySelector(".gf-match-card").innerHTML = `
+      <div class="gf-fulltime">
+        <div class="gf-fulltime-label">Session complete</div>
+        <div class="gf-practice-score r-${M.rate(ev.score)}">${ev.score}<small>/100</small></div>
+        ${res.breakthrough
+          ? `<div class="gf-motm-banner gold">⬆ ${res.attrLabel} improved!</div>`
+          : ""}
+        <div class="gf-rewards">
+          <div class="gf-reward"><div class="n">+${res.earned}</div><div class="l">Training pts</div></div>
+          <div class="gf-reward"><div class="n">${next.trainingSessions}</div><div class="l">Sessions left</div></div>
+        </div>
+        <button class="btn btn-primary" data-action="drill-done">Continue</button>
+      </div>
+    `;
+    overlay.querySelector('[data-action="drill-done"]').addEventListener("click", () => {
+      overlay.remove();
+      onComplete(next);
+    });
+  }
+
+  window.GaaMatch = { start, practice, drill };
 })();
 
 </script>
@@ -2615,6 +2935,24 @@ input:focus, select:focus {
           <p class="dim small" style="margin-top:10px">Your position decides which match situations you face.</p>
         </div>
 
+        <div class="panel">
+          <label>Kit &amp; Number</label>
+          <div class="gf-kit-grid">
+            ${G.KITS.map((k, i) => `
+              <button class="gf-kit ${i === 0 ? "on" : ""}" data-setup-kit="${k.key}"
+                      title="${esc(k.label)}" aria-label="${esc(k.label)}">
+                <span class="sw" style="--kit:${k.primary};--kit2:${k.secondary}"></span>
+                <em>${esc(k.label)}</em>
+              </button>`).join("")}
+          </div>
+          <div class="gf-num-row" style="margin-top:14px">
+            <span class="gf-jersey" id="setup-jersey"
+                  style="--kit:${G.KITS[0].primary};--kit2:${G.KITS[0].secondary};width:52px;height:52px"><span>15</span></span>
+            <input id="f-squad-setup" type="number" min="1" max="40" value="15"
+                   inputmode="numeric" aria-label="Squad number" />
+          </div>
+        </div>
+
         <button class="btn btn-primary btn-lg" data-action="start">Start Career</button>
       </div>
     `;
@@ -2626,12 +2964,31 @@ input:focus, select:focus {
         app.querySelectorAll(".gf-pos").forEach((b) => b.classList.toggle("on", b === btn));
       });
     });
+
+    let chosenKit = G.KITS[0].key;
+    const jersey = app.querySelector("#setup-jersey");
+    const squadInput = app.querySelector("#f-squad-setup");
+    app.querySelectorAll("[data-setup-kit]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        chosenKit = btn.dataset.setupKit;
+        const k = G.KITS.find((x) => x.key === chosenKit);
+        app.querySelectorAll("[data-setup-kit]").forEach((b) => b.classList.toggle("on", b === btn));
+        jersey.style.setProperty("--kit", k.primary);
+        jersey.style.setProperty("--kit2", k.secondary);
+      });
+    });
+    squadInput.addEventListener("input", () => {
+      jersey.querySelector("span").textContent = squadInput.value || "15";
+    });
+
     app.querySelector('[data-action="start"]').addEventListener("click", () => {
       setState(G.createCareer({
         name: document.getElementById("f-name").value,
         club: document.getElementById("f-club").value,
         county: document.getElementById("f-county").value,
         positionKey: chosen,
+        kitKey: chosenKit,
+        squadNumber: squadInput.value,
       }));
     });
   }
@@ -2648,7 +3005,10 @@ input:focus, select:focus {
           <div class="gf-title">${esc(state.name)}</div>
           <div class="gf-sub">${esc(pos.label)} · ${esc(G.teamName(state))} · ${esc(tier.label)}</div>
         </div>
-        <div class="gf-ovr" title="Overall rating"><span>${overall}</span><small>OVR</small></div>
+        <div class="gf-headright">
+          ${jerseyHtml(28)}
+          <div class="gf-ovr" title="Overall rating"><span>${overall}</span><small>OVR</small></div>
+        </div>
       </header>
       <div class="gf-statstrip">
         <div class="gf-stat"><span class="l">Season</span><span class="v">${state.season}</span></div>
@@ -2657,6 +3017,16 @@ input:focus, select:focus {
         <div class="gf-stat"><span class="l">Form</span><span class="v">${formHtml()}</span></div>
       </div>
     `;
+  }
+
+  /** Kit-coloured jersey with the squad number on it. */
+  function jerseyHtml(size) {
+    const kit = G.kitOf(state);
+    return `
+      <span class="gf-jersey" style="--kit:${kit.primary};--kit2:${kit.secondary};width:${size}px;height:${size}px"
+            title="${esc(kit.label)} · No. ${state.squadNumber}">
+        <span>${state.squadNumber}</span>
+      </span>`;
   }
 
   function formHtml() {
@@ -2856,7 +3226,94 @@ input:focus, select:focus {
       </div>
 
       <div class="panel">
+        <div class="gf-row-between"><span class="k">Your Kit</span></div>
+        <div class="gf-kit-grid">
+          ${G.KITS.map((k) => `
+            <button class="gf-kit ${k.key === state.kit ? "on" : ""}" data-action="kit" data-key="${k.key}"
+                    title="${esc(k.label)}" aria-label="${esc(k.label)}">
+              <span class="sw" style="--kit:${k.primary};--kit2:${k.secondary}"></span>
+              <em>${esc(k.label)}</em>
+            </button>`).join("")}
+        </div>
+
+        <div class="gf-row-between" style="margin-top:16px"><span class="k">Squad Number</span></div>
+        <div class="gf-num-row">
+          ${jerseyHtml(52)}
+          <input id="f-squad" type="number" min="1" max="40" value="${state.squadNumber}"
+                 inputmode="numeric" aria-label="Squad number" />
+        </div>
+
+        <div class="gf-row-between" style="margin-top:16px"><span class="k">Position</span></div>
+        <div class="gf-pos-grid">
+          ${G.POSITIONS.map((p) => `
+            <button class="gf-pos ${p.key === state.position ? "on" : ""}" data-action="position" data-key="${p.key}">
+              <span class="n">${esc(p.label)}</span>
+              <span class="b">${esc(p.blurb)}</span>
+            </button>`).join("")}
+        </div>
+        <p class="dim small" style="margin-top:10px">
+          Switching position changes which situations you face in a match.
+        </p>
+      </div>
+
+      <div class="panel">
         <button class="btn btn-quiet" data-action="reset">Retire &amp; start a new career</button>
+      </div>
+    `;
+  }
+
+  // ---------- Training tab ----------
+
+  function trainTabHtml() {
+    const left = state.trainingSessions == null ? G.SESSIONS_PER_ROUND : state.trainingSessions;
+    const injured = !!state.injury;
+
+    return `
+      <div class="panel">
+        <div class="gf-row-between">
+          <span class="k">Sessions this week</span>
+          <span class="gf-tp">${left} of ${G.SESSIONS_PER_ROUND} left</span>
+        </div>
+        <div class="gf-session-dots">
+          ${Array.from({ length: G.SESSIONS_PER_ROUND }, (_, i) =>
+            `<i class="${i < left ? "on" : ""}"></i>`).join("")}
+        </div>
+        <p class="dim small" style="margin:10px 0 0">
+          Drills earn training points and can sharpen the attribute outright.
+          Sessions refresh when the next fixture is played.
+        </p>
+      </div>
+
+      ${energyHtml()}
+
+      ${injured ? `<div class="panel"><p class="gf-blocked" style="margin:0">
+        Injured — ${esc(state.injury.label)}. No training until you're right. Rest up on the Season tab.
+      </p></div>` : ""}
+
+      <div class="panel">
+        <div class="gf-row-between"><span class="k">Drills</span></div>
+        <div class="gf-drills">
+          ${G.DRILLS.map((d) => {
+            const g = GD.byKey[d.key] || {};
+            const attr = G.ATTRS.find((a) => a.key === d.attr) || {};
+            const can = left > 0 && !injured && state.energy >= d.energy;
+            return `
+              <button class="gf-drill" data-action="drill" data-key="${d.key}" ${can ? "" : "disabled"}>
+                <span class="ic">${g.icon || "⚽"}</span>
+                <span class="tx">
+                  <b>${esc(d.label)}</b>
+                  <small>${esc(d.blurb)}</small>
+                </span>
+                <span class="meta">
+                  <em>${esc(attr.label || d.attr)}</em>
+                  <i>−${d.energy}⚡</i>
+                </span>
+              </button>`;
+          }).join("")}
+        </div>
+        ${left <= 0 ? `<p class="dim small" style="margin:12px 0 0">
+          No sessions left. Play or sit out the next fixture to refresh them.
+        </p>` : ""}
       </div>
     `;
   }
@@ -2936,6 +3393,7 @@ input:focus, select:focus {
     if (state.phase === "offseason") tab = "season";
 
     const body = tab === "table" ? tableTabHtml()
+      : tab === "train" ? trainTabHtml()
       : tab === "player" ? playerTabHtml()
       : tab === "guide" ? guideTabHtml()
       : seasonTabHtml();
@@ -2949,6 +3407,7 @@ input:focus, select:focus {
         <nav class="gf-tabbar">
           <button class="gf-tabbtn ${tab === "season" ? "on" : ""}" data-tab="season"><span>🏟️</span>Season</button>
           <button class="gf-tabbtn ${tab === "table" ? "on" : ""}" data-tab="table"><span>📊</span>Table</button>
+          <button class="gf-tabbtn ${tab === "train" ? "on" : ""}" data-tab="train"><span>🏋️</span>Train</button>
           <button class="gf-tabbtn ${tab === "player" ? "on" : ""}" data-tab="player"><span>👤</span>Player</button>
           <button class="gf-tabbtn ${tab === "guide" ? "on" : ""}" data-tab="guide"><span>📖</span>Guide</button>
         </nav>
@@ -2991,6 +3450,23 @@ input:focus, select:focus {
     app.querySelectorAll('[data-action="toggle"]').forEach((btn) => {
       btn.addEventListener("click", () => setState(G.toggleSetting(state, btn.dataset.key)));
     });
+
+    app.querySelectorAll('[data-action="drill"]').forEach((btn) => {
+      btn.addEventListener("click", () => window.GaaMatch.drill(state, G, btn.dataset.key, setState));
+    });
+
+    app.querySelectorAll('[data-action="kit"]').forEach((btn) => {
+      btn.addEventListener("click", () => setState(G.setKit(state, btn.dataset.key)));
+    });
+
+    app.querySelectorAll('[data-action="position"]').forEach((btn) => {
+      btn.addEventListener("click", () => setState(G.changePosition(state, btn.dataset.key)));
+    });
+
+    const squad = app.querySelector("#f-squad");
+    if (squad) {
+      squad.addEventListener("change", () => setState(G.setSquadNumber(state, squad.value)));
+    }
   }
 
   applySettings();
