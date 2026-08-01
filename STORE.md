@@ -116,19 +116,38 @@ below).
 
 ## 4. iOS
 
+On a fresh clone, run these **in order** before opening Xcode:
+
 ```bash
-npm run ios              # builds, syncs, opens Xcode
+npm install              # the Podfile resolves pods out of node_modules
+npm run sync             # builds www/ and copies it into the iOS project
+cd ios/App && pod install
+open App.xcworkspace     # the .xcworkspace, never the .xcodeproj
 ```
+
+Both middle steps matter, because Capacitor's own `ios/.gitignore` deliberately
+excludes its generated files from version control:
+
+| Missing | Symptom | Fixed by |
+|---|---|---|
+| `App/App/public/`, `App/App/capacitor.config.json` | app builds but launches to a blank white screen | `npm run sync` |
+| `App/Pods/`, `Pods-App.debug.xcconfig` | *"Failed to open document … no such file"*, red filenames in the navigator | `pod install` |
+
+Red filenames in Xcode's navigator always mean the same thing: the project
+references a file that is not on disk. Re-run whichever step above generates it
+rather than removing the reference.
+
+No CocoaPods? `sudo gem install cocoapods` or `brew install cocoapods`. The
+first `pod install` fetches the spec repo and can take several minutes — it is
+not stuck.
+
+You also need an iOS runtime to run on: Xcode → Settings → Components, or plug
+in a real iPhone. A fresh Xcode install has none, and the toolbar will show the
+platform as "Not Installed".
 
 In Xcode: select the **App** target → Signing & Capabilities → set your Team.
 Bump **Version** and **Build**. Then **Product → Archive** →
 **Distribute App** → App Store Connect.
-
-If `pod install` did not run when you scaffolded (it needs macOS):
-
-```bash
-cd ios/App && pod install
-```
 
 ---
 

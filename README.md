@@ -125,6 +125,19 @@ npm run ios          # build + sync + open Xcode  (needs macOS)
 npm run assets       # regenerate every icon and splash from assets/
 ```
 
+On a **fresh clone**, iOS needs one extra step because Capacitor gitignores its
+own generated files — `App/App/public/` and the Pods:
+
+```
+npm install
+npm run sync                    # regenerates App/App/public/
+cd ios/App && pod install       # regenerates Pods/ and its xcconfigs
+open App.xcworkspace            # the workspace, not the .xcodeproj
+```
+
+Skip `npm run sync` and the app builds but launches blank; skip `pod install`
+and Xcode reports a missing `Pods-App.debug.xcconfig`.
+
 **See [STORE.md](STORE.md) before submitting** — it covers signing, listing
 copy, the data-safety answers, screenshot sizes, and a note on the app name
 and app ID (the ID is permanent after your first upload).
